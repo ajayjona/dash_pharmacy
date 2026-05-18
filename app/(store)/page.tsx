@@ -160,7 +160,7 @@ export default function HomePage() {
       {/* Section 4 - How It Works */}
       <section className="py-16 lg:py-24 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-serif text-text-primary mb-12 text-center">How MedRun works</h2>
+          <h2 className="text-3xl font-serif text-text-primary mb-12 text-center">How Dash Care works</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
             <div className="hidden md:block absolute top-12 left-1/6 right-1/6 h-[1px] bg-border border-dashed border-t-2 z-0"></div>
@@ -201,7 +201,7 @@ export default function HomePage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-opacity-20">
             <h2 className="text-2xl md:text-3xl font-serif text-surface text-center md:text-left leading-tight">
               Get 10% off your first order.<br/>
-              Use code <span className="text-accent font-mono bg-surface/10 px-2 py-1 rounded ml-1">MEDRUN10</span> at checkout.
+              Use code <span className="text-accent font-mono bg-surface/10 px-2 py-1 rounded ml-1">DASHCARE10</span> at checkout.
             </h2>
             <Link href="/shop" className="shrink-0">
               <button className="bg-surface text-primary-green font-medium px-8 py-3 rounded-lg hover:bg-opacity-90 transition-colors flex items-center">

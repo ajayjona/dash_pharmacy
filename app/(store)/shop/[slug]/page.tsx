@@ -158,7 +158,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             </div>
 
             <div className="border-t border-border pt-6 text-sm text-text-muted">
-              Sold by <strong>MedRun Pharmacy</strong> · Licensed by NDA
+              Sold by <strong>Dash Care Pharmacy</strong> · Licensed by NDA
             </div>
           </div>
         </div>

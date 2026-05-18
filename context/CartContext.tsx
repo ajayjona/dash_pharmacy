@@ -25,7 +25,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    const saved = localStorage.getItem('medrun_cart');
+    const saved = localStorage.getItem('dashcare_cart');
     if (saved) {
       try {
         setItems(JSON.parse(saved));
@@ -37,7 +37,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (mounted) {
-      localStorage.setItem('medrun_cart', JSON.stringify(items));
+      localStorage.setItem('dashcare_cart', JSON.stringify(items));
     }
   }, [items, mounted]);
 

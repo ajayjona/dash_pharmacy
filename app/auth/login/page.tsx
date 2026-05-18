@@ -32,12 +32,17 @@ export default function LoginPage() {
       <div className="bg-surface w-full max-w-md rounded-2xl shadow-sm border border-border p-8 animate-in zoom-in-95 duration-300">
         
         <div className="text-center mb-8">
-          <Link href="/" className="text-3xl font-serif tracking-tight mb-2 inline-block">
-            <span className="text-text-primary font-bold">Med</span>
-            <span className="text-primary-green">Run</span>
+          <Link href="/" className="text-3xl font-serif tracking-tight mb-2 flex items-center justify-center gap-2 group">
+            <div className="w-8 h-8 rounded-lg bg-primary-green flex items-center justify-center text-surface font-sans font-black text-lg shadow-sm transition-transform group-hover:scale-105">
+              D
+            </div>
+            <div>
+              <span className="text-text-primary font-bold">Dash</span>
+              <span className="text-primary-green font-medium">Care</span>
+            </div>
           </Link>
           <h1 className="text-2xl font-serif text-text-primary mb-1 mt-4">Welcome back</h1>
-          <p className="text-text-secondary text-sm">Log in to your MedRun account.</p>
+          <p className="text-text-secondary text-sm">Log in to your Dash Care account.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">

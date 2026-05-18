@@ -90,7 +90,7 @@ export default function OrderTrackingPage({ params }: { params: { id: string } }
                         </div>
                         <div>
                           <p className="text-sm font-bold text-text-primary">David Mukasa</p>
-                          <p className="text-xs text-text-muted">MedRun Rider</p>
+                          <p className="text-xs text-text-muted">Dash Care Rider</p>
                         </div>
                       </div>
                       <Button size="sm" variant="outline" className="shrink-0">

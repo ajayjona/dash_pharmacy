@@ -17,15 +17,15 @@ export default function CartPage() {
   const router = useRouter();
 
   const handleApplyPromo = () => {
-    if (promoCode.toUpperCase() === 'MEDRUN10') {
-      setAppliedPromo('MEDRUN10');
+    if (promoCode.toUpperCase() === 'DASHCARE10') {
+      setAppliedPromo('DASHCARE10');
       setPromoError('');
     } else {
       setPromoError('Invalid promo code');
     }
   };
 
-  const discount = appliedPromo === 'MEDRUN10' ? subtotal * 0.1 : 0;
+  const discount = appliedPromo === 'DASHCARE10' ? subtotal * 0.1 : 0;
   const deliveryFee = subtotal > 50000 ? 0 : 5000;
   const total = subtotal - discount + deliveryFee;
 
