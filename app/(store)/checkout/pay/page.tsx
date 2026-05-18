@@ -1,0 +1,183 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Lock, CheckCircle2, Loader2 } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
+import { formatPrice } from '@/lib/formatters';
+import { Button } from '@/components/ui/Button';
+
+export default function PaymentPage() {
+  const { subtotal, clearCart } = useCart();
+  const router = useRouter();
+  
+  const [activeTab, setActiveTab] = useState<'mtn' | 'airtel' | 'card'>('mtn');
+  const [phone, setPhone] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success'>('idle');
+  const [countdown, setCountdown] = useState(60);
+
+  // Hardcoded for demo
+  const total = subtotal > 0 ? subtotal + 5000 : 87500;
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (paymentStatus === 'processing' && countdown > 0) {
+      timer = setInterval(() => setCountdown(c => c - 1), 1000);
+    } else if (paymentStatus === 'processing' && countdown === 0) {
+      setPaymentStatus('idle'); // Failed / timeout
+    }
+    return () => clearInterval(timer);
+  }, [paymentStatus, countdown]);
+
+  const handlePay = () => {
+    setPaymentStatus('processing');
+    setCountdown(60);
+    // Simulate successful payment after 4 seconds
+    setTimeout(() => {
+      setPaymentStatus('success');
+      setTimeout(() => {
+        clearCart();
+        router.push('/orders/MR-2025-00431/confirm');
+      }, 2000);
+    }, 4000);
+  };
+
+  return (
+    <div className="bg-background min-h-[80vh] flex flex-col pt-12 pb-20">
+      <div className="max-w-2xl mx-auto px-4 w-full">
+        
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-serif text-text-primary mb-2">Complete payment</h1>
+          <p className="text-text-secondary">Choose your preferred payment method.</p>
+        </div>
+
+        <div className="bg-surface rounded-xl border border-border overflow-hidden shadow-sm mb-8">
+          <div className="flex border-b border-border">
+            <button 
+              className={`flex-1 py-4 text-sm font-bold transition-colors ${activeTab === 'mtn' ? 'bg-[#FFCC00]/10 text-[#FFCC00] border-b-2 border-[#FFCC00]' : 'text-text-muted hover:text-text-primary'}`}
+              onClick={() => setActiveTab('mtn')}
+            >
+              MTN MoMo
+            </button>
+            <button 
+              className={`flex-1 py-4 text-sm font-bold transition-colors ${activeTab === 'airtel' ? 'bg-[#FF0000]/10 text-[#FF0000] border-b-2 border-[#FF0000]' : 'text-text-muted hover:text-text-primary'}`}
+              onClick={() => setActiveTab('airtel')}
+            >
+              Airtel Money
+            </button>
+            <button 
+              className={`flex-1 py-4 text-sm font-bold transition-colors ${activeTab === 'card' ? 'bg-[#1A1F71]/10 text-[#1A1F71] border-b-2 border-[#1A1F71]' : 'text-text-muted hover:text-text-primary'}`}
+              onClick={() => setActiveTab('card')}
+            >
+              Card
+            </button>
+          </div>
+
+          <div className="p-6 md:p-8">
+            {paymentStatus === 'success' ? (
+              <div className="flex flex-col items-center justify-center py-8 animate-in zoom-in duration-300">
+                <div className="w-16 h-16 bg-primary-light rounded-full flex items-center justify-center text-primary-green mb-4">
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold text-text-primary mb-2">Payment confirmed!</h3>
+                <p className="text-text-secondary text-sm">Redirecting to your order confirmation...</p>
+              </div>
+            ) : paymentStatus === 'processing' ? (
+              <div className="flex flex-col items-center justify-center py-8 animate-in fade-in">
+                <Loader2 className="w-12 h-12 text-primary-green animate-spin mb-6" />
+                <h3 className="text-lg font-medium text-text-primary mb-2">Waiting for approval...</h3>
+                <p className="text-text-secondary text-sm mb-6 text-center max-w-sm">
+                  Please check your phone and enter your PIN to approve the payment prompt.
+                </p>
+                <div className="font-mono text-xl font-bold text-primary-green bg-primary-light px-4 py-2 rounded-lg mb-6">
+                  00:{countdown.toString().padStart(2, '0')}
+                </div>
+                {countdown === 0 && (
+                  <Button variant="outline" onClick={() => setPaymentStatus('idle')}>Try again</Button>
+                )}
+              </div>
+            ) : (
+              <div className="animate-in fade-in">
+                
+                {activeTab === 'mtn' && (
+                  <div>
+                    <div className="bg-[#FFCC00]/10 border border-[#FFCC00]/20 rounded-lg p-3 text-sm text-[#B38F00] font-medium mb-6">
+                      A payment prompt will be sent to your MTN number.
+                    </div>
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-text-primary mb-1">MTN phone number</label>
+                      <input 
+                        type="tel" 
+                        placeholder="077X XXX XXX" 
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full px-4 py-3 border border-border rounded-lg focus:ring-1 focus:ring-[#FFCC00] focus:border-[#FFCC00]" 
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'airtel' && (
+                  <div>
+                    <div className="bg-[#FF0000]/10 border border-[#FF0000]/20 rounded-lg p-3 text-sm text-[#CC0000] font-medium mb-6">
+                      A payment prompt will be sent to your Airtel number.
+                    </div>
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-text-primary mb-1">Airtel phone number</label>
+                      <input 
+                        type="tel" 
+                        placeholder="075X XXX XXX" 
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full px-4 py-3 border border-border rounded-lg focus:ring-1 focus:ring-[#FF0000] focus:border-[#FF0000]" 
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'card' && (
+                  <div className="space-y-4 mb-6">
+                    <div>
+                      <label className="block text-sm font-medium text-text-primary mb-1">Card number</label>
+                      <input type="text" placeholder="0000 0000 0000 0000" className="w-full px-4 py-3 border border-border rounded-lg focus:ring-1 focus:ring-primary-green font-mono" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-text-primary mb-1">Expiry (MM/YY)</label>
+                        <input type="text" placeholder="MM/YY" className="w-full px-4 py-3 border border-border rounded-lg focus:ring-1 focus:ring-primary-green" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-text-primary mb-1">CVV</label>
+                        <input type="text" placeholder="123" className="w-full px-4 py-3 border border-border rounded-lg focus:ring-1 focus:ring-primary-green" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-text-primary mb-1">Cardholder name</label>
+                      <input type="text" placeholder="John Doe" className="w-full px-4 py-3 border border-border rounded-lg focus:ring-1 focus:ring-primary-green" />
+                    </div>
+                  </div>
+                )}
+
+                <div className="text-center mb-6">
+                  <span className="text-text-secondary text-sm">Amount to pay:</span>
+                  <div className="text-3xl font-mono font-bold text-text-primary mt-1">{formatPrice(total)}</div>
+                </div>
+
+                <Button size="lg" className="w-full" onClick={handlePay}>
+                  {activeTab === 'card' ? `Pay ${formatPrice(total)}` : 'Pay now'}
+                </Button>
+
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center gap-2 text-xs text-text-muted">
+          <Lock className="w-4 h-4" />
+          <span>256-bit SSL encryption · Secured by <strong>Flutterwave</strong></span>
+        </div>
+
+      </div>
+    </div>
+  );
+}
