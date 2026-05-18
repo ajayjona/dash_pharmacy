@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Package, Truck, Home, CheckCircle2, Phone, MessageCircle } from 'lucide-react';
+import { Truck, Home, CheckCircle2, Phone, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 export default function OrderTrackingPage({ params }: { params: { id: string } }) {

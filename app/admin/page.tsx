@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ChevronDown, AlertTriangle, ArrowUpRight, ArrowDownRight, RefreshCw } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, RefreshCw } from 'lucide-react';
 import { mockOrders, mockProducts } from '@/lib/mockData';
 import { formatPrice } from '@/lib/formatters';
 import { Badge } from '@/components/ui/Badge';

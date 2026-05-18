@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Search, SlidersHorizontal, Printer, X } from 'lucide-react';
+import { Search, Printer, X } from 'lucide-react';
 import { mockOrders } from '@/lib/mockData';
 import { formatPrice } from '@/lib/formatters';
 import { Badge } from '@/components/ui/Badge';

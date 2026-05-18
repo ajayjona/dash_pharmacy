@@ -33,8 +33,19 @@ export default function CheckoutPage() {
   const deliveryFee = deliveryOption === 'express' ? 15000 : (subtotal > 50000 ? 0 : 5000);
   const total = subtotal - discount + deliveryFee;
 
-  if (items.length === 0) {
-    router.push('/cart');
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (isMounted && items.length === 0) {
+      router.push('/cart');
+    }
+  }, [isMounted, items, router]);
+
+  if (!isMounted || items.length === 0) {
     return null;
   }
 
