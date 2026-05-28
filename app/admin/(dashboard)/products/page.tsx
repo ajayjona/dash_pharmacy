@@ -24,24 +24,66 @@ export default function AdminProductsPage() {
   });
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Infinite Scroll State
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const LIMIT = 20;
 
-  const fetchProducts = () => {
-    fetch('/api/products?limit=1000')
-      .then(res => res.json())
-      .then(data => {
+  const fetchProducts = async (pageIndex: number) => {
+    try {
+      const skip = pageIndex * LIMIT;
+      const res = await fetch(`/api/products?limit=${LIMIT}&skip=${skip}`);
+      const data = await res.json();
+
+      if (data.length < LIMIT) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
+
+      if (pageIndex === 0) {
         setProducts(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
+      } else {
+        setProducts(prev => {
+          const existingIds = new Set(prev.map(p => p.id));
+          const newProducts = data.filter((p: any) => !existingIds.has(p.id));
+          return [...prev, ...newProducts];
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (page === 0) setLoading(true);
+    else setLoadingMore(true);
+    
+    fetchProducts(page);
+  }, [page]);
+
+  const observerRef = React.useRef<IntersectionObserver | null>(null);
+  const lastElementRef = React.useCallback(
+    (node: HTMLTableRowElement | null) => {
+      if (loading || loadingMore || searchQuery) return;
+      if (observerRef.current) observerRef.current.disconnect();
+      
+      observerRef.current = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting && hasMore) {
+          setPage(prev => prev + 1);
+        }
+      });
+      
+      if (node) observerRef.current.observe(node);
+    },
+    [loading, loadingMore, hasMore, searchQuery]
+  );
 
   const handleSaveProduct = async () => {
     if (!formData.name || !formData.price || !formData.slug) {
@@ -63,7 +105,8 @@ export default function AdminProductsPage() {
           name: '', slug: '', category: 'Pain Relief', description: '',
           price: '', originalPrice: '', stockQty: '', requiresPrescription: false, isActive: true
         });
-        fetchProducts(); // Refresh the list
+        setPage(0);
+        fetchProducts(0); // Refresh the list from the top
       } else {
         const error = await response.json();
         alert(error.error || "Failed to save product.");
@@ -133,10 +176,12 @@ export default function AdminProductsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {loading ? (
+            {loading && page === 0 ? (
               <tr><td colSpan={7} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-primary-green" /></td></tr>
-            ) : filteredProducts.map((product) => (
-              <tr key={product.id} className="hover:bg-background/50">
+            ) : filteredProducts.map((product, index) => {
+              const isLastElement = index === filteredProducts.length - 1;
+              return (
+              <tr key={product.id} ref={isLastElement ? lastElementRef : null} className="hover:bg-background/50">
                 <td className="p-4">
                   <div className="w-10 h-10 relative bg-background border border-border rounded overflow-hidden">
                     <Image src={product.image} alt={product.name} fill className="object-cover" />
@@ -176,7 +221,14 @@ export default function AdminProductsPage() {
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
+            {loadingMore && (
+              <tr><td colSpan={7} className="p-4 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-primary-green" /></td></tr>
+            )}
+            {!hasMore && products.length > 0 && !searchQuery && (
+              <tr><td colSpan={7} className="p-4 text-center text-xs text-text-muted">End of products</td></tr>
+            )}
           </tbody>
         </table>
       </div>

@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Mail, Lock, Eye, EyeOff, User, Phone, Briefcase, Image as ImageIcon, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, Phone, Briefcase, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { ImageUploader } from '@/components/ui/ImageUploader';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
@@ -160,18 +161,8 @@ export default function AdminRegisterPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Profile Picture URL</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <ImageIcon className="h-5 w-5 text-text-muted" />
-                </div>
-                <input type="url" value={image} onChange={e => setImage(e.target.value)} placeholder="https://example.com/avatar.jpg" required className="block w-full pl-10 pr-3 py-3 border border-border rounded-lg bg-background text-sm focus:outline-none focus:border-primary-green" />
-              </div>
-              {image && (
-                <div className="mt-3 flex justify-center">
-                  <img src={image} alt="Preview" className="w-16 h-16 rounded-full object-cover border border-border shadow-sm" />
-                </div>
-              )}
+              <label className="block text-xs font-bold text-text-secondary uppercase mb-2">Profile Picture</label>
+              <ImageUploader value={image} onChange={setImage} />
             </div>
             
             <div>

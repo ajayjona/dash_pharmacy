@@ -6,10 +6,12 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const limit = parseInt(searchParams.get('limit') || '50');
+    const skip = parseInt(searchParams.get('skip') || '0');
 
     const products = await prisma.product.findMany({
       where: category && category !== 'all' ? { category: { equals: category, mode: 'insensitive' } } : undefined,
       take: limit,
+      skip: skip,
       orderBy: { createdAt: 'desc' },
     });
 
