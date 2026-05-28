@@ -16,7 +16,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-30 w-full bg-surface border-b border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         
         <div className="flex items-center gap-4">
           <button 
@@ -26,14 +26,8 @@ export const Navbar: React.FC = () => {
             <Menu className="w-6 h-6" />
           </button>
           
-          <Link href="/" className="text-2xl font-serif tracking-tight flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-primary-green flex items-center justify-center text-surface font-sans font-black text-lg shadow-sm transition-transform group-hover:scale-105">
-              D
-            </div>
-            <div>
-              <span className="text-text-primary font-bold">Dash</span>
-              <span className="text-primary-green font-medium">Care</span>
-            </div>
+          <Link href="/" className="flex items-center gap-2 group">
+            <img src="/dash_pharmacy_logo.png" alt="Dash Pharmacy Logo" className="h-20 w-auto object-contain transition-transform group-hover:scale-105" />
           </Link>
         </div>
 
@@ -115,14 +109,8 @@ export const Navbar: React.FC = () => {
           <div className="fixed inset-0 bg-text-primary/50" onClick={() => setIsMobileMenuOpen(false)} />
           <div className="relative w-64 max-w-sm bg-surface h-full shadow-xl flex flex-col animate-in slide-in-from-left">
             <div className="flex items-center justify-between p-4 border-b border-border">
-              <div className="text-xl font-serif tracking-tight flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-primary-green flex items-center justify-center text-surface font-sans font-black text-md">
-                  D
-                </div>
-                <div>
-                  <span className="text-text-primary font-bold">Dash</span>
-                  <span className="text-primary-green font-medium">Care</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <img src="/dash_pharmacy_logo.png" alt="Dash Pharmacy Logo" className="h-20 w-auto object-contain" />
               </div>
               <button onClick={() => setIsMobileMenuOpen(false)} className="text-text-secondary">
                 <X className="w-6 h-6" />

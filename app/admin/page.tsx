@@ -1,16 +1,60 @@
-'use client';
-
 import React from 'react';
 import Link from 'next/link';
 import { AlertTriangle, ArrowUpRight, RefreshCw } from 'lucide-react';
-import { mockOrders, mockProducts } from '@/lib/mockData';
+import prisma from '@/lib/prisma';
 import { formatPrice } from '@/lib/formatters';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 
-export default function AdminDashboard() {
-  const lowStockProducts = mockProducts.filter(p => p.stockQty !== undefined && p.stockQty < 10);
-  const recentOrders = mockOrders.slice(0, 5);
+export default async function AdminDashboard() {
+  const lowStockProducts = await prisma.product.findMany({
+    where: { stockQty: { lt: 10 } },
+    orderBy: { stockQty: 'asc' },
+    take: 10
+  });
+  
+  const recentOrders = await prisma.order.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: 5,
+    include: { customer: true }
+  });
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const todayOrders = await prisma.order.findMany({
+    where: { createdAt: { gte: today } }
+  });
+  const todayRevenue = todayOrders.reduce((sum, order) => sum + order.total, 0);
+  
+  const pendingOrdersCount = await prisma.order.count({
+    where: { status: 'pending' }
+  });
+
+  const last7Days = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
+
+  const sevenDaysAgo = last7Days[0];
+  const last7DaysOrders = await prisma.order.findMany({
+    where: { createdAt: { gte: sevenDaysAgo } }
+  });
+
+  const chartData = last7Days.map(date => {
+    const nextDate = new Date(date);
+    nextDate.setDate(date.getDate() + 1);
+    const dayOrders = last7DaysOrders.filter(o => o.createdAt >= date && o.createdAt < nextDate);
+    const rev = dayOrders.reduce((sum, o) => sum + o.total, 0);
+    return {
+      dayName: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
+      revenue: rev
+    };
+  });
+  
+  const maxRev = Math.max(...chartData.map(d => d.revenue), 100000);
 
   const getStatusBadge = (status: string) => {
     switch(status) {
@@ -32,25 +76,25 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-surface rounded-xl p-5 border border-border shadow-sm border-l-4 border-l-primary-green">
           <div className="text-sm text-text-secondary mb-1">Today&apos;s orders</div>
-          <div className="text-3xl font-serif text-text-primary mb-2">47</div>
+          <div className="text-3xl font-serif text-text-primary mb-2">{todayOrders.length}</div>
           <div className="flex items-center text-xs text-primary-green">
             <ArrowUpRight className="w-3 h-3 mr-1" />
-            <span>+8 from yesterday</span>
+            <span>Updated live</span>
           </div>
         </div>
         
         <div className="bg-surface rounded-xl p-5 border border-border shadow-sm border-l-4 border-l-primary-green">
           <div className="text-sm text-text-secondary mb-1">Today&apos;s revenue</div>
-          <div className="text-2xl font-mono font-bold text-text-primary mb-2">UGX 2,340,000</div>
+          <div className="text-2xl font-mono font-bold text-text-primary mb-2">{formatPrice(todayRevenue)}</div>
           <div className="flex items-center text-xs text-primary-green">
             <ArrowUpRight className="w-3 h-3 mr-1" />
-            <span>+15% vs last week</span>
+            <span>Updated live</span>
           </div>
         </div>
         
         <div className="bg-surface rounded-xl p-5 border border-border shadow-sm border-l-4 border-l-[#F4A820]">
           <div className="text-sm text-text-secondary mb-1">Pending orders</div>
-          <div className="text-3xl font-serif text-text-primary mb-2">12</div>
+          <div className="text-3xl font-serif text-text-primary mb-2">{pendingOrdersCount}</div>
           <div className="flex items-center text-xs text-[#B36B00]">
             <AlertTriangle className="w-3 h-3 mr-1" />
             <span>Needs attention</span>
@@ -76,16 +120,19 @@ export default function AdminDashboard() {
           <div className="bg-surface rounded-xl border border-border p-6 shadow-sm">
             <h2 className="text-lg font-bold text-text-primary mb-6">Revenue (Last 7 Days)</h2>
             <div className="h-48 flex items-end justify-between gap-2">
-              {[40, 60, 45, 80, 55, 90, 75].map((val, i) => (
-                <div key={i} className="flex flex-col items-center flex-1 gap-2">
-                  <div className="w-full bg-primary-green rounded-t-sm transition-all hover:bg-opacity-80 relative group" style={{ height: `${val}%` }}>
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-text-primary text-surface text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                      UGX {val * 30},000
+              {chartData.map((data, i) => {
+                const heightPercent = Math.max((data.revenue / maxRev) * 100, 2); // At least 2% height for visibility
+                return (
+                  <div key={i} className="flex flex-col items-center flex-1 gap-2">
+                    <div className="w-full bg-primary-green rounded-t-sm transition-all hover:bg-opacity-80 relative group" style={{ height: `${heightPercent}%` }}>
+                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-text-primary text-surface text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                        {formatPrice(data.revenue)}
+                      </div>
                     </div>
+                    <span className="text-xs text-text-muted">{data.dayName}</span>
                   </div>
-                  <span className="text-xs text-text-muted">{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, Search, AlertTriangle, X, Upload } from 'lucide-react';
-import { mockProducts } from '@/lib/mockData';
+import { Plus, Search, AlertTriangle, X, Upload, Loader2 } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { Button } from '@/components/ui/Button';
 
@@ -23,6 +22,59 @@ export default function AdminProductsPage() {
     requiresPrescription: false,
     isActive: true
   });
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const fetchProducts = () => {
+    fetch('/api/products?limit=1000')
+      .then(res => res.json())
+      .then(data => {
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const handleSaveProduct = async () => {
+    if (!formData.name || !formData.price || !formData.slug) {
+      alert("Please fill in the required fields: Name, Slug, and Price.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setIsAddPanelOpen(false);
+        setFormData({
+          name: '', slug: '', category: 'Pain Relief', description: '',
+          price: '', originalPrice: '', stockQty: '', requiresPrescription: false, isActive: true
+        });
+        fetchProducts(); // Refresh the list
+      } else {
+        const error = await response.json();
+        alert(error.error || "Failed to save product.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred while saving.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const categories = ['Pain Relief', 'Vitamins', 'Antibiotics', 'Skincare', 'Baby & Mother', 'First Aid', 'Digestive Health', "Men's Health"];
 
@@ -35,7 +87,7 @@ export default function AdminProductsPage() {
     });
   };
 
-  const filteredProducts = mockProducts.filter(p => 
+  const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     p.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -43,7 +95,7 @@ export default function AdminProductsPage() {
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h1 className="text-2xl font-serif text-text-primary">Products ({mockProducts.length})</h1>
+        <h1 className="text-2xl font-serif text-text-primary">Products ({products.length})</h1>
         <Button onClick={() => setIsAddPanelOpen(true)}>
           <Plus className="w-5 h-5 mr-2" />
           Add new product
@@ -81,7 +133,9 @@ export default function AdminProductsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {filteredProducts.map((product) => (
+            {loading ? (
+              <tr><td colSpan={7} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-primary-green" /></td></tr>
+            ) : filteredProducts.map((product) => (
               <tr key={product.id} className="hover:bg-background/50">
                 <td className="p-4">
                   <div className="w-10 h-10 relative bg-background border border-border rounded overflow-hidden">
@@ -214,7 +268,10 @@ export default function AdminProductsPage() {
 
             <div className="p-4 md:p-6 border-t border-border bg-background/50 flex gap-4">
               <Button variant="outline" className="flex-1" onClick={() => setIsAddPanelOpen(false)}>Cancel</Button>
-              <Button className="flex-1">Save Product</Button>
+              <Button className="flex-1" onClick={handleSaveProduct} disabled={isSaving}>
+                {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Save Product
+              </Button>
             </div>
           </div>
         </>

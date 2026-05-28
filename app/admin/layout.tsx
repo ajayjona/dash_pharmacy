@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { LayoutDashboard, ShoppingBag, Package, Users, BarChart2, LogOut } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Package, Users, BarChart2 } from 'lucide-react';
+import LogoutButton from '@/components/admin/LogoutButton';
 
 export default function AdminLayout({
   children,
@@ -15,9 +16,8 @@ export default function AdminLayout({
         
         {/* Logo */}
         <div className="hidden md:flex p-6 border-b border-white/10 items-center">
-          <Link href="/admin" className="text-2xl font-serif tracking-tight">
-            <span className="font-bold">Med</span>
-            <span className="text-[#84D8B3]">Run</span>
+          <Link href="/admin" className="flex items-center gap-2">
+            <img src="/dash_pharmacy_logo.png" alt="Dash Pharmacy Logo" className="h-20 w-auto object-contain brightness-0 invert" />
             <span className="ml-2 text-[10px] uppercase tracking-wider text-white/50 bg-white/10 px-2 py-0.5 rounded">Admin</span>
           </Link>
         </div>
@@ -36,10 +36,10 @@ export default function AdminLayout({
             <Package className="w-5 h-5 md:w-5 md:h-5" />
             <span className="text-[10px] md:text-sm font-medium">Products</span>
           </Link>
-          <div className="hidden md:flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg text-white/40 cursor-not-allowed">
+          <Link href="/admin/customers" className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg text-white/80 hover:bg-white/10 hover:text-white transition-colors">
             <Users className="w-5 h-5 md:w-5 md:h-5" />
             <span className="text-[10px] md:text-sm font-medium">Customers</span>
-          </div>
+          </Link>
           <div className="hidden md:flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg text-white/40 cursor-not-allowed">
             <BarChart2 className="w-5 h-5 md:w-5 md:h-5" />
             <span className="text-[10px] md:text-sm font-medium">Reports</span>
@@ -49,16 +49,13 @@ export default function AdminLayout({
         {/* Profile / Logout */}
         <div className="hidden md:block p-4 border-t border-white/10 mt-auto">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm">JS</div>
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm">AD</div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">Jane Staff</p>
-              <p className="text-xs text-white/50 truncate">Pharmacist</p>
+              <p className="text-sm font-medium truncate">Administrator</p>
+              <p className="text-xs text-white/50 truncate">Pharmacy Manager</p>
             </div>
           </div>
-          <button className="flex items-center gap-2 text-sm text-danger hover:text-[#ff6b6b] transition-colors w-full p-2">
-            <LogOut className="w-4 h-4" />
-            Log out
-          </button>
+          <LogoutButton />
         </div>
       </aside>
 
@@ -66,12 +63,11 @@ export default function AdminLayout({
       <main className="flex-1 w-full pb-20 md:pb-0 overflow-x-hidden">
         {/* Mobile Header */}
         <div className="md:hidden bg-surface border-b border-border p-4 flex justify-between items-center sticky top-0 z-40">
-          <Link href="/admin" className="text-xl font-serif tracking-tight">
-            <span className="font-bold text-text-primary">Med</span>
-            <span className="text-primary-green">Run</span>
+          <Link href="/admin" className="flex items-center gap-2">
+            <img src="/dash_pharmacy_logo.png" alt="Dash Pharmacy Logo" className="h-16 w-auto object-contain" />
             <span className="ml-1 text-[10px] uppercase text-text-muted">Admin</span>
           </Link>
-          <div className="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center font-bold text-primary-green text-sm">JS</div>
+          <div className="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center font-bold text-primary-green text-sm">AD</div>
         </div>
         
         <div className="p-4 md:p-8">

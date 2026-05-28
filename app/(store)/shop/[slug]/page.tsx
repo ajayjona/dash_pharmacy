@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Minus, Plus, ShoppingCart, Heart, Truck, AlertTriangle } from 'lucide-react';
-import { mockProducts } from '@/lib/mockData';
+import { Heart, Truck, AlertTriangle, Minus, Plus, ShoppingCart, Loader2 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/formatters';
 import { Button } from '@/components/ui/Button';
@@ -12,14 +11,30 @@ import { ProductCard } from '@/components/ui/ProductCard';
 
 export default function ProductDetailPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
-  const product = mockProducts.find(p => p.slug === slug) || mockProducts[0]; // fallback for demo
-  const relatedProducts = mockProducts.filter(p => p.category === product.category && p.id !== product.id).slice(0, 6);
   
   const { addItem } = useCart();
   const [qty, setQty] = useState(1);
   const [activeTab, setActiveTab] = useState('Overview');
+  const [product, setProduct] = useState<any>(null);
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (!product) return <div>Product not found</div>;
+  useEffect(() => {
+    fetch(`/api/products/${slug}`)
+      .then(res => res.json())
+      .then(data => {
+        setProduct(data.product);
+        setRelatedProducts(data.relatedProducts || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, [slug]);
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary-green" /></div>;
+  if (!product) return <div className="min-h-screen flex items-center justify-center text-lg text-text-muted">Product not found</div>;
 
   return (
     <div className="bg-background min-h-screen pb-20">

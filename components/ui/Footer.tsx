@@ -11,21 +11,15 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 mb-12">
           
           <div className="flex flex-col">
-            <Link href="/" className="text-2xl font-serif tracking-tight mb-4 flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-primary-green flex items-center justify-center text-surface font-sans font-black text-lg shadow-sm transition-transform group-hover:scale-105">
-                D
-              </div>
-              <div>
-                <span className="text-text-primary font-bold">Dash</span>
-                <span className="text-primary-green font-medium">Care</span>
-              </div>
+            <Link href="/" className="mb-4 flex items-center gap-2 group">
+              <img src="/dash_pharmacy_logo.png" alt="Dash Pharmacy Logo" className="h-20 w-auto object-contain transition-transform group-hover:scale-105" />
             </Link>
             <p className="text-text-secondary font-medium mb-4">Your health, delivered.</p>
             <p className="text-text-muted text-sm leading-relaxed max-w-xs mb-3">
               Dash Care is Uganda&apos;s premier online pharmacy, bringing you authentic medicines and healthcare products with fast, reliable delivery.
             </p>
             <p className="text-text-muted text-xs leading-relaxed max-w-xs font-medium">
-              📍 Bukoto-Kisaasi Road, Kampala
+               Bukoto-Kisaasi Road, Kampala
             </p>
           </div>
 

@@ -2,42 +2,97 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Mail, Lock, Eye, EyeOff, User, Phone } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, Phone, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const router = useRouter();
   
   // Calculate password strength (0 to 3)
   const strength = password.length === 0 ? 0 : password.length < 6 ? 1 : password.length < 10 ? 2 : 3;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone, password })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to register');
+      }
+
+      // Automatically sign in after registration
+      const signInRes = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+      });
+
+      if (signInRes?.error) {
+        throw new Error(signInRes.error);
+      }
+
+      // We don't know the role immediately, but the backend assigns ADMIN if it's the first user.
+      // Redirect to /admin as a reasonable default for the first user or just /shop.
+      // Let's redirect to /admin, and if they aren't admin, middleware pushes them to login.
+      router.push('/admin');
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   return (
     <div className="min-h-screen bg-background flex flex-col justify-center items-center px-4 py-12">
       <div className="bg-surface w-full max-w-md rounded-2xl shadow-sm border border-border p-8 animate-in zoom-in-95 duration-300">
         
         <div className="text-center mb-8">
-          <Link href="/" className="text-3xl font-serif tracking-tight mb-2 flex items-center justify-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-primary-green flex items-center justify-center text-surface font-sans font-black text-lg shadow-sm transition-transform group-hover:scale-105">
-              D
-            </div>
-            <div>
-              <span className="text-text-primary font-bold">Dash</span>
-              <span className="text-primary-green font-medium">Care</span>
-            </div>
+          <Link href="/" className="mb-2 flex items-center justify-center gap-2 group">
+            <img src="/dash_pharmacy_logo.png" alt="Dash Pharmacy Logo" className="h-20 w-auto object-contain transition-transform group-hover:scale-105" />
           </Link>
           <h1 className="text-2xl font-serif text-text-primary mb-1 mt-4">Create your account</h1>
           <p className="text-text-secondary text-sm">Join Dash Care for faster checkouts and easy refills.</p>
         </div>
 
-        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); window.location.href = '/shop'; }}>
+        <form className="space-y-4" onSubmit={handleSubmit}>
           
+          {error && (
+            <div className="p-3 rounded-lg bg-danger/10 border border-danger/20 text-danger text-sm text-center font-medium">
+              {error}
+            </div>
+          )}
+
           <div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <User className="h-5 w-5 text-text-muted" />
               </div>
-              <input type="text" placeholder="Full name" required className="block w-full pl-10 pr-3 py-3 border border-border rounded-lg bg-background text-sm focus:outline-none focus:border-primary-green focus:ring-1 focus:ring-primary-green transition-colors" />
+              <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Full name" required className="block w-full pl-10 pr-3 py-3 border border-border rounded-lg bg-background text-sm focus:outline-none focus:border-primary-green focus:ring-1 focus:ring-primary-green transition-colors" />
             </div>
           </div>
 
@@ -46,7 +101,7 @@ export default function RegisterPage() {
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Mail className="h-5 w-5 text-text-muted" />
               </div>
-              <input type="email" placeholder="Email address" required className="block w-full pl-10 pr-3 py-3 border border-border rounded-lg bg-background text-sm focus:outline-none focus:border-primary-green focus:ring-1 focus:ring-primary-green transition-colors" />
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" required className="block w-full pl-10 pr-3 py-3 border border-border rounded-lg bg-background text-sm focus:outline-none focus:border-primary-green focus:ring-1 focus:ring-primary-green transition-colors" />
             </div>
           </div>
 
@@ -55,7 +110,7 @@ export default function RegisterPage() {
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Phone className="h-5 w-5 text-text-muted" />
               </div>
-              <input type="tel" placeholder="Phone number" required className="block w-full pl-10 pr-3 py-3 border border-border rounded-lg bg-background text-sm focus:outline-none focus:border-primary-green focus:ring-1 focus:ring-primary-green transition-colors" />
+              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone number" required className="block w-full pl-10 pr-3 py-3 border border-border rounded-lg bg-background text-sm focus:outline-none focus:border-primary-green focus:ring-1 focus:ring-primary-green transition-colors" />
             </div>
           </div>
 
@@ -96,7 +151,7 @@ export default function RegisterPage() {
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Lock className="h-5 w-5 text-text-muted" />
               </div>
-              <input type={showPassword ? 'text' : 'password'} placeholder="Confirm password" required className="block w-full pl-10 pr-10 py-3 border border-border rounded-lg bg-background text-sm focus:outline-none focus:border-primary-green focus:ring-1 focus:ring-primary-green transition-colors" />
+              <input type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Confirm password" required className="block w-full pl-10 pr-10 py-3 border border-border rounded-lg bg-background text-sm focus:outline-none focus:border-primary-green focus:ring-1 focus:ring-primary-green transition-colors" />
             </div>
           </div>
 
@@ -107,7 +162,8 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          <Button type="submit" size="lg" className="w-full mt-6">
+          <Button type="submit" size="lg" className="w-full mt-6" disabled={isLoading}>
+            {isLoading ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : null}
             Create account
           </Button>
         </form>

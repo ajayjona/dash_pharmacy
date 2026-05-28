@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Search, Printer, X } from 'lucide-react';
-import { mockOrders } from '@/lib/mockData';
+import { Search, Printer, X, Loader2 } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -11,7 +10,80 @@ import { Button } from '@/components/ui/Button';
 export default function AdminOrdersPage() {
   const [activeTab, setActiveTab] = useState('All');
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
-  const [viewingOrder, setViewingOrder] = useState<typeof mockOrders[0] | null>(null);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [viewingOrder, setViewingOrder] = useState<any | null>(null);
+  const [newStatus, setNewStatus] = useState<string>('');
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  const openOrder = (order: any) => {
+    setViewingOrder(order);
+    setNewStatus(order.status);
+  };
+
+  const handleUpdateStatus = async () => {
+    if (!viewingOrder || !newStatus || viewingOrder.status === newStatus) return;
+    
+    setIsUpdatingStatus(true);
+    try {
+      const res = await fetch(`/api/orders/${viewingOrder.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setViewingOrder(updated);
+        setOrders(orders.map(o => o.id === updated.id ? updated : o));
+      } else {
+        alert("Failed to update status");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error updating status");
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  const handleBulkUpdate = async (status: string) => {
+    if (selectedOrders.length === 0) return;
+    
+    // Using simple loop for bulk updates in MVP
+    try {
+      const updates = selectedOrders.map(id => 
+        fetch(`/api/orders/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        }).then(res => res.json())
+      );
+      
+      const updatedOrdersData = await Promise.all(updates);
+      
+      // Update local state
+      const updatedMap = new Map(updatedOrdersData.map(o => [o.id, o]));
+      setOrders(orders.map(o => updatedMap.get(o.id) || o));
+      setSelectedOrders([]); // Clear selection
+      alert(`Successfully updated ${selectedOrders.length} orders to ${status}.`);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to perform bulk update");
+    }
+  };
+
+  useEffect(() => {
+    fetch('/api/orders')
+      .then(res => res.json())
+      .then(data => {
+        setOrders(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
 
   const tabs = ['All', 'Pending', 'Confirmed', 'Packing', 'Dispatched', 'Delivered', 'Cancelled'];
 
@@ -28,7 +100,7 @@ export default function AdminOrdersPage() {
   };
 
   const toggleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) setSelectedOrders(mockOrders.map(o => o.id));
+    if (e.target.checked) setSelectedOrders(orders.map(o => o.id));
     else setSelectedOrders([]);
   };
 
@@ -43,8 +115,8 @@ export default function AdminOrdersPage() {
         <h1 className="text-2xl font-serif text-text-primary">Manage Orders</h1>
         {selectedOrders.length > 0 && (
           <div className="flex gap-2">
-            <Button variant="outline" size="sm">Mark as packing</Button>
-            <Button size="sm">Mark as dispatched</Button>
+            <Button variant="outline" size="sm" onClick={() => handleBulkUpdate('packing')}>Mark as packing</Button>
+            <Button size="sm" onClick={() => handleBulkUpdate('dispatched')}>Mark as dispatched</Button>
           </div>
         )}
       </div>
@@ -84,7 +156,7 @@ export default function AdminOrdersPage() {
             <tr>
               <th className="p-4 w-12 text-center">
                 <input type="checkbox" className="rounded border-border text-primary-green focus:ring-primary-green" 
-                       checked={selectedOrders.length === mockOrders.length && mockOrders.length > 0} onChange={toggleSelectAll} />
+                       checked={selectedOrders.length === orders.length && orders.length > 0} onChange={toggleSelectAll} />
               </th>
               <th className="p-4 font-medium">Order #</th>
               <th className="p-4 font-medium">Customer</th>
@@ -97,23 +169,25 @@ export default function AdminOrdersPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {mockOrders.map((order) => (
+            {loading ? (
+              <tr><td colSpan={9} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-primary-green" /></td></tr>
+            ) : orders.map((order) => (
               <tr key={order.id} className="hover:bg-background/50">
                 <td className="p-4 text-center">
                   <input type="checkbox" className="rounded border-border text-primary-green focus:ring-primary-green"
                          checked={selectedOrders.includes(order.id)} onChange={() => toggleSelect(order.id)} />
                 </td>
                 <td className="p-4 font-mono font-medium">{order.orderNumber}</td>
-                <td className="p-4">{order.customer.name}</td>
-                <td className="p-4 text-text-secondary">{order.customer.phone}</td>
-                <td className="p-4 text-text-secondary">{order.items.length} items</td>
+                <td className="p-4">{order.customer?.name}</td>
+                <td className="p-4 text-text-secondary">{order.customer?.phone}</td>
+                <td className="p-4 text-text-secondary">{order.items?.length || 0} items</td>
                 <td className="p-4 font-mono font-medium">{formatPrice(order.total)}</td>
                 <td className="p-4">{getStatusBadge(order.status)}</td>
                 <td className="p-4 text-text-secondary">
                   {new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                 </td>
                 <td className="p-4 text-right">
-                  <button className="text-primary-green hover:underline font-medium" onClick={() => setViewingOrder(order)}>View</button>
+                  <button className="text-primary-green hover:underline font-medium" onClick={() => openOrder(order)}>View</button>
                 </td>
               </tr>
             ))}
@@ -143,9 +217,9 @@ export default function AdminOrdersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 border border-border rounded-xl bg-background">
                   <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Customer</h3>
-                  <p className="font-medium text-sm">{viewingOrder.customer.name}</p>
-                  <p className="text-sm text-text-secondary">{viewingOrder.customer.phone}</p>
-                  <p className="text-sm text-text-secondary">{viewingOrder.customer.email}</p>
+                  <p className="font-medium text-sm">{viewingOrder.customer?.name}</p>
+                  <p className="text-sm text-text-secondary">{viewingOrder.customer?.phone}</p>
+                  <p className="text-sm text-text-secondary">{viewingOrder.customer?.email}</p>
                 </div>
                 <div className="p-4 border border-border rounded-xl bg-background">
                   <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Status</h3>
@@ -159,10 +233,10 @@ export default function AdminOrdersPage() {
               <div>
                 <h3 className="font-bold text-text-primary mb-3">Delivery Address</h3>
                 <div className="p-4 border border-border rounded-xl bg-surface text-sm text-text-secondary">
-                  <p className="font-medium text-text-primary">{viewingOrder.deliveryAddress.name}</p>
-                  <p>{viewingOrder.deliveryAddress.street}</p>
-                  <p>{viewingOrder.deliveryAddress.district}</p>
-                  {viewingOrder.deliveryAddress.instructions && (
+                  <p className="font-medium text-text-primary">{viewingOrder.deliveryAddress?.name}</p>
+                  <p>{viewingOrder.deliveryAddress?.street}</p>
+                  <p>{viewingOrder.deliveryAddress?.district}</p>
+                  {viewingOrder.deliveryAddress?.instructions && (
                     <p className="mt-2 text-text-muted italic">Note: {viewingOrder.deliveryAddress.instructions}</p>
                   )}
                 </div>
@@ -215,7 +289,7 @@ export default function AdminOrdersPage() {
                     <span className="font-medium uppercase">{viewingOrder.paymentMethod.replace('_', ' ')}</span>
                     <Badge variant="success" className="ml-2">Paid</Badge>
                   </div>
-                  <span className="font-mono text-text-muted text-xs">Ref: TXN-123456</span>
+                  <span className="font-mono text-text-muted text-xs">Ref: {viewingOrder.id.substring(0, 8).toUpperCase()}</span>
                 </div>
               </div>
 
@@ -224,15 +298,23 @@ export default function AdminOrdersPage() {
             <div className="p-4 md:p-6 border-t border-border bg-background/50 flex gap-4 items-end">
               <div className="flex-1">
                 <label className="block text-xs font-bold text-text-muted mb-1">Update Status</label>
-                <select className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:outline-none focus:border-primary-green">
+                <select 
+                  value={newStatus} 
+                  onChange={(e) => setNewStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:outline-none focus:border-primary-green"
+                >
                   <option value="pending">Pending</option>
                   <option value="confirmed">Confirmed</option>
                   <option value="packing">Packing</option>
                   <option value="dispatched">Dispatched</option>
                   <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
               </div>
-              <Button>Update</Button>
+              <Button onClick={handleUpdateStatus} disabled={isUpdatingStatus || viewingOrder.status === newStatus}>
+                {isUpdatingStatus ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Update
+              </Button>
             </div>
           </div>
         </>

@@ -3,7 +3,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Search, SlidersHorizontal, X, ChevronDown, Loader2 } from 'lucide-react';
 import { ProductCard } from '@/components/ui/ProductCard';
-import { mockProducts } from '@/lib/mockData';
 import { Button } from '@/components/ui/Button';
 
 const CATEGORIES = ['All', 'Pain Relief', 'Vitamins', 'Antibiotics', 'Skincare', 'Baby & Mother', 'First Aid', 'Digestive Health', "Men's Health"];
@@ -17,6 +16,21 @@ export default function ShopPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [priceRange, setPriceRange] = useState<number>(150000);
   const [sortBy, setSortBy] = useState<string>('Relevance');
+  const [products, setProducts] = useState<any[]>([]);
+  const [isFetching, setIsFetching] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/products?limit=100')
+      .then(res => res.json())
+      .then(data => {
+        setProducts(data);
+        setIsFetching(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setIsFetching(false);
+      });
+  }, []);
   
   // Infinite scroll states
   const [visibleCount, setVisibleCount] = useState<number>(ITEMS_PER_PAGE);
@@ -24,7 +38,7 @@ export default function ShopPage() {
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const filteredProducts = useMemo(() => {
-    let result = mockProducts.filter((product) => {
+    let result = products.filter((product) => {
       if (activeCategory !== 'All' && product.category !== activeCategory) return false;
       if (inStockOnly && !product.inStock) return false;
       if (prescriptionOnly && !product.requiresPrescription) return false;
@@ -302,7 +316,14 @@ export default function ShopPage() {
             ) : (
               <>
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                  {displayedProducts.map((product) => (
+                  {isFetching ? (
+                    <>
+                      <SkeletonCard />
+                      <SkeletonCard />
+                      <SkeletonCard />
+                      <SkeletonCard />
+                    </>
+                  ) : displayedProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
                   

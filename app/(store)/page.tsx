@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -25,7 +23,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ProductCard } from '@/components/ui/ProductCard';
-import { mockProducts } from '@/lib/mockData';
+import prisma from '@/lib/prisma';
 import { formatPrice } from '@/lib/formatters';
 
 const categories = [
@@ -39,9 +37,14 @@ const categories = [
   { name: "Men's health", icon: User, slug: 'mens-health' },
 ];
 
-export default function HomePage() {
-  const bestSellers = mockProducts.slice(0, 8);
-  const heroProducts = mockProducts.slice(0, 4);
+export default async function HomePage() {
+  const products = await prisma.product.findMany({
+    where: { isActive: true },
+    take: 8,
+  });
+  
+  const bestSellers = products;
+  const heroProducts = products.slice(0, 4);
 
   return (
     <div className="flex flex-col min-h-screen">
