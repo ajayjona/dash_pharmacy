@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { LayoutDashboard, ShoppingBag, Package, Users, BarChart2, Settings } from 'lucide-react';
 import LogoutButton from '@/components/admin/LogoutButton';
+import ActiveLink from '@/components/admin/ActiveLink';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
@@ -52,22 +53,43 @@ export default async function AdminLayout({
 
         {/* Navigation */}
         <nav className="flex-1 flex md:flex-col items-center md:items-stretch justify-around md:justify-start p-2 md:p-4 gap-1 md:gap-2">
-          <Link href="/admin" className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg text-white/80 hover:bg-white/10 hover:text-white transition-colors">
+          <ActiveLink 
+            href="/admin" 
+            exact={true}
+            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg transition-colors"
+            inactiveClassName="text-white/70 hover:bg-white/10 hover:text-white font-medium"
+            activeClassName="bg-primary-green text-white font-bold shadow-md border border-white/20"
+          >
             <LayoutDashboard className="w-5 h-5 md:w-5 md:h-5" />
-            <span className="text-[10px] md:text-sm font-medium">Dashboard</span>
-          </Link>
-          <Link href="/admin/orders" className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg text-white/80 hover:bg-white/10 hover:text-white transition-colors">
+            <span className="text-[10px] md:text-sm">Dashboard</span>
+          </ActiveLink>
+          <ActiveLink 
+            href="/admin/orders" 
+            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg transition-colors"
+            inactiveClassName="text-white/70 hover:bg-white/10 hover:text-white font-medium"
+            activeClassName="bg-primary-green text-white font-bold shadow-md border border-white/20"
+          >
             <ShoppingBag className="w-5 h-5 md:w-5 md:h-5" />
-            <span className="text-[10px] md:text-sm font-medium">Orders</span>
-          </Link>
-          <Link href="/admin/products" className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg text-white/80 hover:bg-white/10 hover:text-white transition-colors">
+            <span className="text-[10px] md:text-sm">Orders</span>
+          </ActiveLink>
+          <ActiveLink 
+            href="/admin/products" 
+            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg transition-colors"
+            inactiveClassName="text-white/70 hover:bg-white/10 hover:text-white font-medium"
+            activeClassName="bg-primary-green text-white font-bold shadow-md border border-white/20"
+          >
             <Package className="w-5 h-5 md:w-5 md:h-5" />
-            <span className="text-[10px] md:text-sm font-medium">Products</span>
-          </Link>
-          <Link href="/admin/customers" className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg text-white/80 hover:bg-white/10 hover:text-white transition-colors">
+            <span className="text-[10px] md:text-sm">Products</span>
+          </ActiveLink>
+          <ActiveLink 
+            href="/admin/customers" 
+            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg transition-colors"
+            inactiveClassName="text-white/70 hover:bg-white/10 hover:text-white font-medium"
+            activeClassName="bg-primary-green text-white font-bold shadow-md border border-white/20"
+          >
             <Users className="w-5 h-5 md:w-5 md:h-5" />
-            <span className="text-[10px] md:text-sm font-medium">Customers</span>
-          </Link>
+            <span className="text-[10px] md:text-sm">Customers</span>
+          </ActiveLink>
           <div className="hidden md:flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg text-white/40 cursor-not-allowed">
             <BarChart2 className="w-5 h-5 md:w-5 md:h-5" />
             <span className="text-[10px] md:text-sm font-medium">Reports</span>
@@ -88,10 +110,15 @@ export default async function AdminLayout({
             </div>
           </div>
           <div className="w-full space-y-1">
-            <Link href="/admin/settings" className="flex items-center justify-center gap-2 text-sm text-white/80 hover:bg-white/10 hover:text-white rounded-lg transition-colors w-full p-2.5">
+            <ActiveLink 
+              href="/admin/settings" 
+              className="flex items-center justify-center gap-2 text-sm rounded-lg transition-colors w-full p-2.5"
+              inactiveClassName="text-white/80 hover:bg-white/10 hover:text-white font-medium"
+              activeClassName="bg-primary-green text-white font-bold shadow-inner"
+            >
               <Settings className="w-4 h-4" />
               Settings
-            </Link>
+            </ActiveLink>
             <div className="hover:bg-danger/10 rounded-lg transition-colors">
               <LogoutButton />
             </div>

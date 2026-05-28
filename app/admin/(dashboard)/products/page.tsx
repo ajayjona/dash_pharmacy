@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, Search, AlertTriangle, X, Upload, Loader2 } from 'lucide-react';
+import { Plus, Search, AlertTriangle, X, Upload, Loader2, Package, CheckCircle, Pill } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { Button } from '@/components/ui/Button';
 
@@ -26,6 +26,10 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Stats State
+  const [stats, setStats] = useState<any>(null);
+  const [loadingStats, setLoadingStats] = useState(true);
   
   // Infinite Scroll State
   const [page, setPage] = useState(0);
@@ -61,12 +65,28 @@ export default function AdminProductsPage() {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const res = await fetch('/api/products/stats');
+      const data = await res.json();
+      setStats(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
   useEffect(() => {
     if (page === 0) setLoading(true);
     else setLoadingMore(true);
     
     fetchProducts(page);
   }, [page]);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
   const observerRef = React.useRef<IntersectionObserver | null>(null);
   const lastElementRef = React.useCallback(
@@ -138,12 +158,66 @@ export default function AdminProductsPage() {
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h1 className="text-2xl font-serif text-text-primary">Products ({products.length})</h1>
+        <h1 className="text-2xl font-serif text-text-primary">Products</h1>
         <Button onClick={() => setIsAddPanelOpen(true)}>
           <Plus className="w-5 h-5 mr-2" />
           Add new product
         </Button>
       </div>
+
+      {/* Statistics */}
+      {loadingStats ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="bg-surface rounded-xl border border-border p-4 h-24 animate-pulse flex flex-col justify-center">
+              <div className="h-4 bg-background rounded w-1/2 mb-2"></div>
+              <div className="h-8 bg-background rounded w-1/4"></div>
+            </div>
+          ))}
+        </div>
+      ) : stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-surface rounded-xl border border-border p-5 flex items-center gap-4 shadow-sm">
+            <div className="p-3 rounded-2xl bg-text-muted/10 text-text-secondary shrink-0">
+              <Package className="w-10 h-10" />
+            </div>
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <span className="text-4xl font-black text-text-primary tracking-tight">{stats.totalProducts}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-text-secondary leading-tight">Total Products</span>
+            </div>
+          </div>
+
+          <div className="bg-surface rounded-xl border border-border p-5 flex items-center gap-4 shadow-sm">
+            <div className="p-3 rounded-2xl bg-primary-light/30 text-primary-green shrink-0">
+              <CheckCircle className="w-10 h-10" />
+            </div>
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <span className="text-4xl font-black text-text-primary tracking-tight">{stats.activeProducts}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-primary-green leading-tight">Active Status</span>
+            </div>
+          </div>
+
+          <div className="bg-surface rounded-xl border border-danger/20 bg-danger/5 p-5 flex items-center gap-4 shadow-sm">
+            <div className="p-3 rounded-2xl bg-danger/10 text-danger shrink-0">
+              <AlertTriangle className="w-10 h-10" />
+            </div>
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <span className="text-4xl font-black text-danger tracking-tight">{stats.lowStock}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-danger leading-tight">Low Stock {"< 10"}</span>
+            </div>
+          </div>
+
+          <div className="bg-surface rounded-xl border border-border p-5 flex items-center gap-4 shadow-sm">
+            <div className="p-3 rounded-2xl bg-[#FEF3E8] text-[#B36B00] shrink-0">
+              <Pill className="w-10 h-10" />
+            </div>
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <span className="text-4xl font-black text-text-primary tracking-tight">{stats.rxProducts}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-[#B36B00] leading-tight">Prescription (Rx)</span>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Search */}
       <div className="bg-surface rounded-t-xl border border-border border-b-0 p-4">
