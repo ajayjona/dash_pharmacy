@@ -22,13 +22,15 @@ export default function AdminProductsPage() {
     originalPrice: '',
     stockQty: '',
     requiresPrescription: false,
-    isActive: true
+    isActive: true,
+    image: ''
   });
   const [products, setProducts] = useState<any[]>([]);
   const { confirm } = useConfirm();
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   
   // Stats State
@@ -132,10 +134,10 @@ export default function AdminProductsPage() {
         setEditingProductId(null);
         setFormData({
           name: '', slug: '', category: 'Pain Relief', description: '',
-          price: '', originalPrice: '', stockQty: '', requiresPrescription: false, isActive: true
+          price: '', originalPrice: '', stockQty: '', requiresPrescription: false, isActive: true, image: ''
         });
         setPage(0);
-        fetchProducts(0); // Refresh the list from the top
+        fetchProducts(0); 
         fetchStats();
         toast.success(isEditing ? "Product updated successfully!" : "Product created successfully!");
       } else {
@@ -150,21 +152,58 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    setIsUploading(true);
+    const formDataUpload = new FormData();
+    formDataUpload.append('file', file);
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+      
+      const data = await response.json();
+      setFormData({ ...formData, image: data.url });
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      toast.error('Failed to upload image');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
-    // Optimistic UI update
     setProducts(prev => prev.map(p => p.id === id ? { ...p, isActive: !currentStatus } : p));
     try {
-      await fetch(`/api/products/${id}`, {
+      const response = await fetch(`/api/products/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !currentStatus }),
       });
+      
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to update status');
+      }
+      
       fetchStats();
       toast.success(`Product is now ${!currentStatus ? 'active' : 'inactive'}`);
-    } catch (err) {
+    } catch (err: any) {
       // Revert on error
       setProducts(prev => prev.map(p => p.id === id ? { ...p, isActive: currentStatus } : p));
-      toast.error("Failed to update status");
+      toast.error(err.message || "Failed to update status");
     }
   };
 
@@ -179,7 +218,8 @@ export default function AdminProductsPage() {
       originalPrice: product.originalPrice ? product.originalPrice.toString() : '',
       stockQty: product.stockQty !== null ? product.stockQty.toString() : '',
       requiresPrescription: product.requiresPrescription || false,
-      isActive: product.isActive !== false
+      isActive: product.isActive !== false,
+      image: product.image || ''
     });
     setIsAddPanelOpen(true);
   };
@@ -232,7 +272,7 @@ export default function AdminProductsPage() {
           setEditingProductId(null);
           setFormData({
             name: '', slug: '', category: 'Pain Relief', description: '',
-            price: '', originalPrice: '', stockQty: '', requiresPrescription: false, isActive: true
+            price: '', originalPrice: '', stockQty: '', requiresPrescription: false, isActive: true, image: ''
           });
           setIsAddPanelOpen(true);
         }}>
@@ -386,7 +426,6 @@ export default function AdminProductsPage() {
         </table>
       </div>
 
-      {/* Add / Edit Product Slide-in Panel */}
       {isAddPanelOpen && (
         <>
           <div className="fixed inset-0 bg-text-primary/50 z-50 transition-opacity" onClick={() => setIsAddPanelOpen(false)} />
@@ -462,11 +501,49 @@ export default function AdminProductsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-2">Product Images</label>
-                  <div className="border-2 border-dashed border-border rounded-xl p-8 text-center flex flex-col items-center justify-center bg-background cursor-pointer hover:bg-primary-light/50 transition-colors">
-                    <Upload className="w-8 h-8 text-text-muted mb-2" />
-                    <p className="text-sm font-medium text-text-primary">Click or drag images here</p>
-                    <p className="text-xs text-text-muted mt-1">Maximum 4 images. First image will be the main image.</p>
+                  <label className="block text-sm font-medium text-text-primary mb-2">Product Image</label>
+                  <div className="flex gap-4 items-start">
+                    {formData.image ? (
+                      <div className="w-24 h-24 rounded-xl border border-border overflow-hidden shrink-0 bg-white relative group">
+                        <img src={formData.image} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.src = 'https://placehold.co/400x400/E8F5EE/1A6B4A?text=Error')} />
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 rounded-xl border border-border border-dashed flex items-center justify-center shrink-0 bg-surface">
+                        <Upload className="w-6 h-6 text-text-muted" />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <div className="relative flex items-center gap-3 mb-2">
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          disabled={isUploading}
+                          className="hidden"
+                          id="image-upload"
+                        />
+                        <label 
+                          htmlFor="image-upload" 
+                          className="inline-flex items-center justify-center px-4 py-2 border border-border rounded-lg bg-background hover:bg-surface transition-colors cursor-pointer text-sm font-medium focus:outline-none focus:border-primary-green disabled:opacity-50"
+                        >
+                          {isUploading ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploading...</>
+                          ) : (
+                            <><Upload className="w-4 h-4 mr-2" /> {formData.image ? 'Change Image' : 'Choose Image'}</>
+                          )}
+                        </label>
+                        {formData.image && (
+                          <button
+                            type="button"
+                            onClick={() => setFormData({...formData, image: ''})}
+                            className="inline-flex items-center justify-center px-4 py-2 border border-danger/30 text-danger rounded-lg bg-danger/5 hover:bg-danger/10 transition-colors cursor-pointer text-sm font-medium focus:outline-none disabled:opacity-50"
+                          >
+                            <X className="w-4 h-4 mr-2" /> Remove
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-xs text-text-muted">Upload a high quality product image (JPG, PNG). Max size 5MB.</p>
+                    </div>
                   </div>
                 </div>
               </div>

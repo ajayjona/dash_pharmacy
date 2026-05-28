@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -36,6 +38,7 @@ export async function POST(request: Request) {
         name: body.name,
         slug: body.slug,
         category: body.category,
+        description: body.description,
         price: parseFloat(body.price),
         originalPrice: body.originalPrice ? parseFloat(body.originalPrice) : null,
         stockQty: parseInt(body.stockQty) || 0,
