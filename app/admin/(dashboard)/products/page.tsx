@@ -10,6 +10,9 @@ import { useConfirm } from '@/context/ConfirmContext';
 
 export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState('all');
+  const [activeStatusFilter, setActiveStatusFilter] = useState('all');
   const [isAddPanelOpen, setIsAddPanelOpen] = useState(false);
 
   // Form state for add/edit product
@@ -42,10 +45,14 @@ export default function AdminProductsPage() {
   const [hasMore, setHasMore] = useState(true);
   const LIMIT = 20;
 
-  const fetchProducts = async (pageIndex: number) => {
+  const fetchProducts = async (pageIndex: number, overrideFilters?: { search?: string, category?: string, status?: string }) => {
     try {
       const skip = pageIndex * LIMIT;
-      const res = await fetch(`/api/products?limit=${LIMIT}&skip=${skip}`);
+      const search = overrideFilters?.search ?? debouncedSearchQuery;
+      const category = overrideFilters?.category ?? activeCategoryFilter;
+      const status = overrideFilters?.status ?? activeStatusFilter;
+      
+      const res = await fetch(`/api/products?limit=${LIMIT}&skip=${skip}&category=${category}&status=${status}&search=${search}`);
       const data = await res.json();
 
       if (data.length < LIMIT) {
@@ -84,10 +91,25 @@ export default function AdminProductsPage() {
   };
 
   useEffect(() => {
-    if (page === 0) setLoading(true);
-    else setLoadingMore(true);
-    
-    fetchProducts(page);
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setPage(0);
+    if (page === 0) {
+      setLoading(true);
+      fetchProducts(0);
+    }
+  }, [debouncedSearchQuery, activeCategoryFilter, activeStatusFilter]);
+
+  useEffect(() => {
+    if (page !== 0) {
+      setLoadingMore(true);
+      fetchProducts(page);
+    }
   }, [page]);
 
   useEffect(() => {
@@ -259,10 +281,7 @@ export default function AdminProductsPage() {
     });
   };
 
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    p.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+
 
   return (
     <div>
@@ -335,19 +354,44 @@ export default function AdminProductsPage() {
         </div>
       )}
       
-      {/* Search */}
+      {/* Search and Filters */}
       <div className="bg-surface rounded-t-xl border border-border border-b-0 p-4">
-        <div className="relative w-full max-w-md">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-text-muted" />
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-text-muted" />
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-9 pr-3 py-2 border border-border rounded-lg bg-background text-sm placeholder-text-muted focus:outline-none focus:border-primary-green transition-colors"
+              placeholder="Search products by name or category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-          <input
-            type="text"
-            className="block w-full pl-9 pr-3 py-2 border border-border rounded-lg bg-background text-sm placeholder-text-muted focus:outline-none focus:border-primary-green"
-            placeholder="Search products by name or category..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          
+          <select 
+            value={activeCategoryFilter}
+            onChange={(e) => setActiveCategoryFilter(e.target.value)}
+            className="px-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:border-primary-green text-text-primary min-w-[160px] cursor-pointer"
+          >
+            <option value="all">All Categories</option>
+            {categories.map(c => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+
+          <select 
+            value={activeStatusFilter}
+            onChange={(e) => setActiveStatusFilter(e.target.value)}
+            className="px-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:border-primary-green text-text-primary min-w-[160px] cursor-pointer"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="low-stock">Low Stock</option>
+            <option value="out-of-stock">Out of Stock</option>
+          </select>
         </div>
       </div>
 
@@ -368,8 +412,8 @@ export default function AdminProductsPage() {
           <tbody className="divide-y divide-border">
             {loading && page === 0 ? (
               <tr><td colSpan={7} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-primary-green" /></td></tr>
-            ) : filteredProducts.map((product, index) => {
-              const isLastElement = index === filteredProducts.length - 1;
+            ) : products.map((product, index) => {
+              const isLastElement = index === products.length - 1;
               return (
               <tr key={product.id} ref={isLastElement ? lastElementRef : null} className="hover:bg-background/50">
                 <td className="p-4">

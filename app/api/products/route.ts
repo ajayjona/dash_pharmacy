@@ -7,11 +7,31 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
+    const search = searchParams.get('search');
+    const status = searchParams.get('status');
     const limit = parseInt(searchParams.get('limit') || '50');
     const skip = parseInt(searchParams.get('skip') || '0');
 
+    const where: any = {};
+    if (category && category !== 'all') {
+      where.category = { equals: category, mode: 'insensitive' };
+    }
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { slug: { contains: search, mode: 'insensitive' } },
+        { category: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (status && status !== 'all') {
+      if (status === 'active') where.isActive = true;
+      if (status === 'inactive') where.isActive = false;
+      if (status === 'low-stock') where.stockQty = { lt: 10 };
+      if (status === 'out-of-stock') where.inStock = false;
+    }
+
     const products = await prisma.product.findMany({
-      where: category && category !== 'all' ? { category: { equals: category, mode: 'insensitive' } } : undefined,
+      where,
       take: limit,
       skip: skip,
       orderBy: { createdAt: 'desc' },
