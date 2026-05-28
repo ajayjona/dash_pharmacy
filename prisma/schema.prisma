@@ -34,6 +34,8 @@ model Customer {
   phone     String
   password  String?
   role      String    @default("CUSTOMER")
+  title     String?   // Post/Job title (e.g. Pharmacy Manager)
+  image     String?   // Profile picture URL
   addresses Address[]
   orders    Order[]
   createdAt DateTime  @default(now())

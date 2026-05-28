@@ -1,0 +1,49 @@
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../[...nextauth]/route';
+
+export async function PATCH(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { name, email, currentPassword, newPassword, title, image } = await request.json();
+
+    if (!currentPassword) {
+      return NextResponse.json({ error: 'Current password is required to update credentials' }, { status: 400 });
+    }
+
+    const user = await prisma.customer.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user || !user.password) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) {
+      return NextResponse.json({ error: 'Incorrect current password' }, { status: 400 });
+    }
+
+    const updateData: any = { name, email, title, image };
+    
+    if (newPassword && newPassword.length >= 6) {
+      updateData.password = await bcrypt.hash(newPassword, 10);
+    }
+
+    await prisma.customer.update({
+      where: { email: session.user.email },
+      data: updateData
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to update credentials:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

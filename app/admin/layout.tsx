@@ -1,13 +1,20 @@
 import React from 'react';
 import Link from 'next/link';
-import { LayoutDashboard, ShoppingBag, Package, Users, BarChart2 } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Package, Users, BarChart2, Settings } from 'lucide-react';
 import LogoutButton from '@/components/admin/LogoutButton';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
-  children: React.ReactNode;
 }) {
+  const session = await getServerSession(authOptions);
+  const adminName = session?.user?.name || "Administrator";
+  const adminTitle = (session?.user as any)?.title || "Admin";
+  const adminImage = (session?.user as any)?.image;
+  const adminInitials = adminName.substring(0, 2).toUpperCase();
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#F7F9F8]">
       
@@ -49,12 +56,20 @@ export default function AdminLayout({
         {/* Profile / Logout */}
         <div className="hidden md:block p-4 border-t border-white/10 mt-auto">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm">AD</div>
+            {adminImage ? (
+              <img src={adminImage} alt={adminName} className="w-8 h-8 rounded-full object-cover border border-white/20" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm">{adminInitials}</div>
+            )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">Administrator</p>
-              <p className="text-xs text-white/50 truncate">Pharmacy Manager</p>
+              <p className="text-sm font-medium truncate">{adminName}</p>
+              <p className="text-xs text-white/50 truncate">{adminTitle}</p>
             </div>
           </div>
+          <Link href="/admin/settings" className="flex items-center gap-2 text-sm text-white/80 hover:text-white transition-colors w-full p-2 mb-1">
+            <Settings className="w-4 h-4" />
+            Settings
+          </Link>
           <LogoutButton />
         </div>
       </aside>
@@ -67,7 +82,11 @@ export default function AdminLayout({
             <img src="/dash_pharmacy_logo.png" alt="Dash Pharmacy Logo" className="h-16 w-auto object-contain" />
             <span className="ml-1 text-[10px] uppercase text-text-muted">Admin</span>
           </Link>
-          <div className="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center font-bold text-primary-green text-sm">AD</div>
+          {adminImage ? (
+            <img src={adminImage} alt={adminName} className="w-8 h-8 rounded-full object-cover border border-primary-light" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center font-bold text-primary-green text-sm">{adminInitials}</div>
+          )}
         </div>
         
         <div className="p-4 md:p-8">
