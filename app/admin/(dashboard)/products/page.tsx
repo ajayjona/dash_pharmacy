@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { Plus, Search, AlertTriangle, X, Upload, Loader2, Package, CheckCircle, Pill } from 'lucide-react';
 import { formatPrice } from '@/lib/formatters';
 import { Button } from '@/components/ui/Button';
+import { toast } from 'react-hot-toast';
+import { useConfirm } from '@/context/ConfirmContext';
 
 export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,9 +25,11 @@ export default function AdminProductsPage() {
     isActive: true
   });
   const [products, setProducts] = useState<any[]>([]);
+  const { confirm } = useConfirm();
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
   
   // Stats State
   const [stats, setStats] = useState<any>(null);
@@ -107,35 +111,100 @@ export default function AdminProductsPage() {
 
   const handleSaveProduct = async () => {
     if (!formData.name || !formData.price || !formData.slug) {
-      alert("Please fill in the required fields: Name, Slug, and Price.");
+      toast.error("Please fill in the required fields: Name, Slug, and Price.");
       return;
     }
 
     setIsSaving(true);
     try {
-      const response = await fetch('/api/products', {
-        method: 'POST',
+      const isEditing = !!editingProductId;
+      const url = isEditing ? `/api/products/${editingProductId}` : '/api/products';
+      const method = isEditing ? 'PATCH' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
       if (response.ok) {
         setIsAddPanelOpen(false);
+        setEditingProductId(null);
         setFormData({
           name: '', slug: '', category: 'Pain Relief', description: '',
           price: '', originalPrice: '', stockQty: '', requiresPrescription: false, isActive: true
         });
         setPage(0);
         fetchProducts(0); // Refresh the list from the top
+        fetchStats();
+        toast.success(isEditing ? "Product updated successfully!" : "Product created successfully!");
       } else {
         const error = await response.json();
-        alert(error.error || "Failed to save product.");
+        toast.error(error.error || "Failed to save product.");
       }
     } catch (err) {
       console.error(err);
-      alert("An error occurred while saving.");
+      toast.error("An error occurred while saving.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleToggleActive = async (id: string, currentStatus: boolean) => {
+    // Optimistic UI update
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, isActive: !currentStatus } : p));
+    try {
+      await fetch(`/api/products/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !currentStatus }),
+      });
+      fetchStats();
+      toast.success(`Product is now ${!currentStatus ? 'active' : 'inactive'}`);
+    } catch (err) {
+      // Revert on error
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, isActive: currentStatus } : p));
+      toast.error("Failed to update status");
+    }
+  };
+
+  const handleEdit = (product: any) => {
+    setEditingProductId(product.id);
+    setFormData({
+      name: product.name,
+      slug: product.slug,
+      category: product.category,
+      description: product.description || '',
+      price: product.price.toString(),
+      originalPrice: product.originalPrice ? product.originalPrice.toString() : '',
+      stockQty: product.stockQty !== null ? product.stockQty.toString() : '',
+      requiresPrescription: product.requiresPrescription || false,
+      isActive: product.isActive !== false
+    });
+    setIsAddPanelOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    const isConfirmed = await confirm({
+      title: 'Delete Product',
+      message: 'Are you sure you want to permanently delete this product? This action cannot be undone.',
+      confirmText: 'Delete',
+      variant: 'danger'
+    });
+    
+    if (!isConfirmed) return;
+    
+    // Optimistic UI
+    setProducts(prev => prev.filter(p => p.id !== id));
+    
+    try {
+      await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      fetchStats();
+      toast.success("Product deleted successfully");
+    } catch (err) {
+      toast.error("Failed to delete product");
+      setPage(0);
+      fetchProducts(0);
     }
   };
 
@@ -159,7 +228,14 @@ export default function AdminProductsPage() {
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h1 className="text-2xl font-serif text-text-primary">Products</h1>
-        <Button onClick={() => setIsAddPanelOpen(true)}>
+        <Button onClick={() => {
+          setEditingProductId(null);
+          setFormData({
+            name: '', slug: '', category: 'Pain Relief', description: '',
+            price: '', originalPrice: '', stockQty: '', requiresPrescription: false, isActive: true
+          });
+          setIsAddPanelOpen(true);
+        }}>
           <Plus className="w-5 h-5 mr-2" />
           Add new product
         </Button>
@@ -283,15 +359,18 @@ export default function AdminProductsPage() {
                 </td>
                 <td className="p-4 text-center">
                   <div className="inline-flex items-center">
-                    <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${product.isActive !== false ? 'bg-primary-green' : 'bg-border'}`}>
+                    <div 
+                      onClick={() => handleToggleActive(product.id, product.isActive !== false)}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${product.isActive !== false ? 'bg-primary-green' : 'bg-border'}`}
+                    >
                       <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${product.isActive !== false ? 'translate-x-5' : 'translate-x-1'}`} />
                     </div>
                   </div>
                 </td>
                 <td className="p-4 text-right">
                   <div className="flex items-center justify-end gap-3 text-sm font-medium">
-                    <button className="text-primary-green hover:underline">Edit</button>
-                    <button className="text-danger hover:underline">Delete</button>
+                    <button onClick={() => handleEdit(product)} className="text-primary-green hover:underline">Edit</button>
+                    <button onClick={() => handleDelete(product.id)} className="text-danger hover:underline">Delete</button>
                   </div>
                 </td>
               </tr>
@@ -313,7 +392,9 @@ export default function AdminProductsPage() {
           <div className="fixed inset-0 bg-text-primary/50 z-50 transition-opacity" onClick={() => setIsAddPanelOpen(false)} />
           <div className="fixed inset-y-0 right-0 w-full md:w-[600px] bg-surface shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
             <div className="flex items-center justify-between p-4 md:p-6 border-b border-border bg-background/50">
-              <h2 className="text-xl font-serif text-text-primary">Add New Product</h2>
+              <h2 className="text-xl font-serif text-text-primary">
+                {editingProductId ? 'Edit Product' : 'Add New Product'}
+              </h2>
               <button onClick={() => setIsAddPanelOpen(false)} className="p-2 text-text-secondary hover:text-text-primary">
                 <X className="w-5 h-5" />
               </button>
@@ -396,7 +477,7 @@ export default function AdminProductsPage() {
               <Button variant="outline" className="flex-1" onClick={() => setIsAddPanelOpen(false)}>Cancel</Button>
               <Button className="flex-1" onClick={handleSaveProduct} disabled={isSaving}>
                 {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Save Product
+                {editingProductId ? 'Update Product' : 'Save Product'}
               </Button>
             </div>
           </div>
