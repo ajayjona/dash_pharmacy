@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Serif_Display, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { CartProvider } from "@/context/CartContext";
+
 import { Providers } from "@/components/Providers";
 import NextTopLoader from 'nextjs-toploader';
 
@@ -48,9 +48,7 @@ export default function RootLayout({
           shadow="0 0 10px #016A40,0 0 5px #016A40"
         />
         <Providers>
-          <CartProvider>
-            {children}
-          </CartProvider>
+          {children}
         </Providers>
       </body>
     </html>

@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, User, Phone, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { signIn } from 'next-auth/react';
+import { useAppDispatch } from '@/store/hooks';
+import { loginRequest } from '@/store/slices/authSlice';
 import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
@@ -18,6 +19,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   
   const router = useRouter();
+  const dispatch = useAppDispatch();
   
   // Calculate password strength (0 to 3)
   const strength = password.length === 0 ? 0 : password.length < 6 ? 1 : password.length < 10 ? 2 : 3;
@@ -44,28 +46,7 @@ export default function RegisterPage() {
         throw new Error(data.error || 'Failed to register');
       }
 
-      // Automatically sign in after registration
-      const signInRes = await signIn('credentials', {
-        redirect: false,
-        email,
-        password,
-      });
-
-      if (signInRes?.error) {
-        throw new Error(signInRes.error);
-      }
-
-      // Fetch the session to determine the user's role
-      const sessionRes = await fetch('/api/auth/session');
-      const session = await sessionRes.json();
-      
-      router.refresh();
-      
-      if (session?.user?.role === 'ADMIN') {
-        router.push('/admin');
-      } else {
-        router.push('/');
-      }
+      dispatch(loginRequest({ email, password, callbackUrl: '/' }));
     } catch (err: any) {
       setError(err.message);
     } finally {

@@ -4,14 +4,14 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Check, AlertTriangle, Truck, Zap, Upload } from 'lucide-react';
-import { useCart } from '@/context/CartContext';
+import { useAppSelector } from '@/store/hooks';
 import { formatPrice } from '@/lib/formatters';
 import { Button } from '@/components/ui/Button';
 
 type Step = 1 | 2 | 3;
 
 export default function CheckoutPage() {
-  const { items, subtotal } = useCart();
+  const { items, total: subtotal } = useAppSelector(state => state.cart);
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>(1);
   

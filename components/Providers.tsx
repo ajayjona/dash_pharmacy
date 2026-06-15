@@ -3,12 +3,15 @@
 import { SessionProvider } from 'next-auth/react';
 import { ConfirmProvider } from '@/context/ConfirmContext';
 import { Toaster } from 'react-hot-toast';
+import StoreProvider from '@/store/StoreProvider';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <ConfirmProvider>
-        {children}
+        <StoreProvider>
+          {children}
+        </StoreProvider>
         <Toaster 
           position="top-center" 
           toastOptions={{

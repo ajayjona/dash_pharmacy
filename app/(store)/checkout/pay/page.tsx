@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock, CheckCircle2, Loader2 } from 'lucide-react';
-import { useCart } from '@/context/CartContext';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { clearCart } from '@/store/slices/cartSlice';
 import { formatPrice } from '@/lib/formatters';
 import { Button } from '@/components/ui/Button';
 
 export default function PaymentPage() {
-  const { subtotal, clearCart } = useCart();
+  const dispatch = useAppDispatch();
+  const { total: subtotal } = useAppSelector(state => state.cart);
   const router = useRouter();
   
   const [activeTab, setActiveTab] = useState<'mtn' | 'airtel' | 'card'>('mtn');
@@ -36,7 +38,7 @@ export default function PaymentPage() {
     setTimeout(() => {
       setPaymentStatus('success');
       setTimeout(() => {
-        clearCart();
+        dispatch(clearCart());
         router.push('/orders/MR-2025-00431/confirm');
       }, 2000);
     }, 4000);

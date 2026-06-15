@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { signIn } from 'next-auth/react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { loginRequest } from '@/store/slices/authSlice';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
@@ -12,7 +13,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useAppDispatch();
+  const { isLoading, error: authError } = useAppSelector(state => state.auth);
   
   const router = useRouter();
   // We can't use useSearchParams directly without suspense boundary warning, so we use optional fallback or just redirect to /admin by default if they are admin.
@@ -30,37 +32,17 @@ export default function LoginPage() {
       return;
     }
 
-    setIsLoading(true);
-    try {
-      const res = await signIn('credentials', {
-        redirect: false,
-        email,
-        password,
-      });
-
-      if (res?.error) {
-        setErrors({ general: 'Invalid email or password' });
-      } else {
-        // Fetch the session to determine the user's role
-        const sessionRes = await fetch('/api/auth/session');
-        const session = await sessionRes.json();
-        
-        router.refresh();
-        
-        if (session?.user?.role === 'ADMIN') {
-          router.push('/admin');
-        } else {
-          const params = new URLSearchParams(window.location.search);
-          const callbackUrl = params.get('callbackUrl') || '/';
-          router.push(callbackUrl);
-        }
-      }
-    } catch (e) {
-      setErrors({ general: 'An error occurred during login' });
-    } finally {
-      setIsLoading(false);
-    }
+    const params = new URLSearchParams(window.location.search);
+    const callbackUrl = params.get('callbackUrl') || '/';
+    
+    dispatch(loginRequest({ email, password, callbackUrl }));
   };
+
+  React.useEffect(() => {
+    if (authError) {
+      setErrors({ general: authError });
+    }
+  }, [authError]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col justify-center items-center px-4 py-12">
@@ -142,7 +124,7 @@ export default function LoginPage() {
         </Link>
 
         <p className="text-center text-sm text-text-secondary">
-          Don&apos;s have an account? <Link href="/auth/register" className="font-bold text-primary-green hover:underline">Sign up</Link>
+          Don&apos;t have an account? <Link href="/auth/register" className="font-bold text-primary-green hover:underline">Sign up</Link>
         </p>
 
       </div>

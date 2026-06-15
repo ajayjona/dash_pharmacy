@@ -5,12 +5,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Trash2, Minus, Plus, ShoppingCart, ArrowLeft, CheckCircle2, Lock } from 'lucide-react';
-import { useCart } from '@/context/CartContext';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { updateQuantity, removeItem } from '@/store/slices/cartSlice';
 import { formatPrice } from '@/lib/formatters';
 import { Button } from '@/components/ui/Button';
 
 export default function CartPage() {
-  const { items, updateQty, removeItem, subtotal } = useCart();
+  const dispatch = useAppDispatch();
+  const { items, total: subtotal } = useAppSelector(state => state.cart);
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
   const [promoError, setPromoError] = useState('');
@@ -87,7 +89,7 @@ export default function CartPage() {
                     <div className="flex items-center justify-between md:col-span-4 md:justify-end gap-4 mt-2 md:mt-0">
                       <div className="flex items-center border border-border rounded-lg bg-background">
                         <button 
-                          onClick={() => updateQty(item.product.id, item.quantity - 1)}
+                          onClick={() => dispatch(updateQuantity({ id: item.product.id, quantity: item.quantity - 1 }))}
                           className="p-2 text-text-muted hover:text-primary-green transition-colors"
                         >
                           <Minus className="w-4 h-4" />
@@ -95,11 +97,11 @@ export default function CartPage() {
                         <input 
                           type="number"
                           value={item.quantity}
-                          onChange={(e) => updateQty(item.product.id, parseInt(e.target.value) || 1)}
+                          onChange={(e) => dispatch(updateQuantity({ id: item.product.id, quantity: parseInt(e.target.value) || 1 }))}
                           className="w-12 text-center font-mono font-medium text-sm border-none focus:ring-0 bg-transparent p-0"
                         />
                         <button 
-                          onClick={() => updateQty(item.product.id, item.quantity + 1)}
+                          onClick={() => dispatch(updateQuantity({ id: item.product.id, quantity: item.quantity + 1 }))}
                           className="p-2 text-text-muted hover:text-primary-green transition-colors"
                         >
                           <Plus className="w-4 h-4" />
@@ -111,7 +113,7 @@ export default function CartPage() {
                       </div>
                       
                       <button 
-                        onClick={() => removeItem(item.product.id)}
+                        onClick={() => dispatch(removeItem(item.product.id))}
                         className="p-2 text-text-muted hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"
                         aria-label="Remove item"
                       >

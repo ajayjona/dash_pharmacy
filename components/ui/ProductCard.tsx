@@ -4,7 +4,8 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-import { useCart } from '../../context/CartContext';
+import { useAppDispatch } from '@/store/hooks';
+import { addItem } from '@/store/slices/cartSlice';
 import { Product } from '@/types';
 import { formatPrice } from '@/lib/formatters';
 import { Button } from './Button';
@@ -14,7 +15,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { addItem } = useCart();
+  const dispatch = useAppDispatch();
   const { name, price, originalPrice, image, category, inStock, requiresPrescription, slug } = product;
 
   return (
@@ -76,7 +77,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             if (requiresPrescription) {
               window.location.href = `/shop/${slug}`;
             } else {
-              addItem(product);
+              dispatch(addItem(product));
             }
           }}
         >

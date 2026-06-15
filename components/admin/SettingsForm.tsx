@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAppDispatch } from '@/store/hooks';
+import { initializeAuth } from '@/store/slices/authSlice';
 import { User, Mail, Lock, Loader2, Briefcase, Shield, Key } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ImageUploader } from '@/components/ui/ImageUploader';
@@ -17,7 +18,7 @@ interface SettingsFormProps {
 }
 
 export default function SettingsForm({ initialData }: SettingsFormProps) {
-  const { update } = useSession();
+  const dispatch = useAppDispatch();
   const router = useRouter();
   
   // Profile State prefilled from live database
@@ -52,7 +53,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
       setProfileMsg({ text: 'Profile updated successfully!', type: 'success' });
       
       // Update local session to trigger client re-renders if necessary
-      await update({ name, title, image });
+      dispatch(initializeAuth());
       // Force the server to refetch layouts
       router.refresh();
       

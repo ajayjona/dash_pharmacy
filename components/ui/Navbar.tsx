@@ -3,19 +3,22 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Search, ShoppingCart, Menu, X, LogOut, LayoutDashboard, User as UserIcon } from 'lucide-react';
-import { useCart } from '../../context/CartContext';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { openCart } from '@/store/slices/cartSlice';
+import { logoutRequest } from '@/store/slices/authSlice';
 import { Button } from './Button';
-import { useSession, signOut } from 'next-auth/react';
 
 export const Navbar: React.FC = () => {
-  const { itemCount, openCart } = useCart();
+  const dispatch = useAppDispatch();
+  const itemCount = useAppSelector(state => state.cart.itemCount);
+  const { user, isAuthenticated } = useAppSelector(state => state.auth);
+  
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  const { data: session, status } = useSession();
-  const isLoggedIn = status === 'authenticated';
-  const isAdmin = (session?.user as any)?.role === 'ADMIN';
+  const isLoggedIn = isAuthenticated;
+  const isAdmin = user?.role === 'ADMIN';
 
   const getInitials = (name?: string | null) => {
     if (!name) return 'U';
@@ -69,7 +72,7 @@ export const Navbar: React.FC = () => {
 
           <button 
             className="relative p-2 text-text-secondary hover:text-primary-green transition-colors"
-            onClick={openCart}
+            onClick={() => dispatch(openCart())}
           >
             <ShoppingCart className="w-5 h-5" />
             {itemCount > 0 && (
@@ -86,14 +89,14 @@ export const Navbar: React.FC = () => {
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="w-10 h-10 rounded-full bg-primary-light text-primary-green flex items-center justify-center font-bold text-sm cursor-pointer border border-primary-green/20 hover:bg-primary-green hover:text-surface transition-colors"
                 >
-                  {getInitials(session?.user?.name)}
+                  {getInitials(user?.name)}
                 </button>
                 
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-surface rounded-xl shadow-lg border border-border py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="px-4 py-2 border-b border-border">
-                      <p className="text-sm font-semibold text-text-primary truncate">{session?.user?.name}</p>
-                      <p className="text-xs text-text-muted truncate">{session?.user?.email}</p>
+                      <p className="text-sm font-semibold text-text-primary truncate">{user?.name}</p>
+                      <p className="text-xs text-text-muted truncate">{user?.email}</p>
                     </div>
                     {isAdmin && (
                       <Link 
@@ -116,7 +119,7 @@ export const Navbar: React.FC = () => {
                     <button 
                       onClick={() => {
                         setIsDropdownOpen(false);
-                        signOut();
+                        dispatch(logoutRequest());
                       }}
                       className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-danger hover:bg-danger/5 transition-colors border-t border-border mt-1"
                     >
@@ -180,8 +183,8 @@ export const Navbar: React.FC = () => {
               {isLoggedIn ? (
                 <>
                   <div className="px-2 py-1 mb-2">
-                    <p className="text-sm font-semibold text-text-primary">{session?.user?.name}</p>
-                    <p className="text-xs text-text-muted truncate">{session?.user?.email}</p>
+                    <p className="text-sm font-semibold text-text-primary">{user?.name}</p>
+                    <p className="text-xs text-text-muted truncate">{user?.email}</p>
                   </div>
                   {isAdmin && (
                     <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
@@ -202,7 +205,7 @@ export const Navbar: React.FC = () => {
                     variant="outline"
                     onClick={() => {
                       setIsMobileMenuOpen(false);
-                      signOut();
+                      dispatch(logoutRequest());
                     }}
                   >
                     <LogOut className="w-4 h-4" />

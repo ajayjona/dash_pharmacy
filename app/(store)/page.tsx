@@ -38,10 +38,16 @@ const categories = [
 ];
 
 export default async function HomePage() {
-  const products = await prisma.product.findMany({
+  const products = (await prisma.product.findMany({
     where: { isActive: true },
     take: 8,
-  });
+  })).map(p => ({
+    ...p,
+    originalPrice: p.originalPrice ?? undefined,
+    description: p.description ?? undefined,
+    stockQty: p.stockQty ?? undefined,
+    images: p.images ?? undefined,
+  }));
   
   const bestSellers = products;
   const heroProducts = products.slice(0, 4);

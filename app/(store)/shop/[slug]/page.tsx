@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Heart, Truck, AlertTriangle, Minus, Plus, ShoppingCart, Loader2 } from 'lucide-react';
-import { useCart } from '@/context/CartContext';
+import { useAppDispatch } from '@/store/hooks';
+import { addItem } from '@/store/slices/cartSlice';
 import { formatPrice } from '@/lib/formatters';
 import { Button } from '@/components/ui/Button';
 import { ProductCard } from '@/components/ui/ProductCard';
@@ -12,7 +13,7 @@ import { ProductCard } from '@/components/ui/ProductCard';
 export default function ProductDetailPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
   
-  const { addItem } = useCart();
+  const dispatch = useAppDispatch();
   const [qty, setQty] = useState(1);
   const [activeTab, setActiveTab] = useState('Overview');
   const [product, setProduct] = useState<any>(null);
@@ -152,7 +153,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 <Button 
                   size="lg" 
                   disabled={!product.inStock}
-                  onClick={() => addItem(product, qty)}
+                  onClick={() => dispatch(addItem({ product, quantity: qty }))}
                   className="flex-1"
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
