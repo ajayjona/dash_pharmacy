@@ -2,17 +2,30 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Search, ShoppingCart, Menu, X } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X, LogOut, LayoutDashboard, User as UserIcon } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { Button } from './Button';
+import { useSession, signOut } from 'next-auth/react';
 
 export const Navbar: React.FC = () => {
   const { itemCount, openCart } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  // Mock login state for now
-  const isLoggedIn = false;
+  const { data: session, status } = useSession();
+  const isLoggedIn = status === 'authenticated';
+  const isAdmin = (session?.user as any)?.role === 'ADMIN';
+
+  const getInitials = (name?: string | null) => {
+    if (!name) return 'U';
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase();
+  };
 
   return (
     <header className="sticky top-0 z-30 w-full bg-surface border-b border-border">
@@ -66,10 +79,52 @@ export const Navbar: React.FC = () => {
             )}
           </button>
 
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3 relative">
             {isLoggedIn ? (
-              <div className="w-8 h-8 rounded-full bg-primary-light text-primary-green flex items-center justify-center font-bold text-sm cursor-pointer border border-primary-green/20">
-                JD
+              <div className="relative">
+                <button 
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="w-10 h-10 rounded-full bg-primary-light text-primary-green flex items-center justify-center font-bold text-sm cursor-pointer border border-primary-green/20 hover:bg-primary-green hover:text-surface transition-colors"
+                >
+                  {getInitials(session?.user?.name)}
+                </button>
+                
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-surface rounded-xl shadow-lg border border-border py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="px-4 py-2 border-b border-border">
+                      <p className="text-sm font-semibold text-text-primary truncate">{session?.user?.name}</p>
+                      <p className="text-xs text-text-muted truncate">{session?.user?.email}</p>
+                    </div>
+                    {isAdmin && (
+                      <Link 
+                        href="/admin" 
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-text-secondary hover:bg-background hover:text-primary-green transition-colors"
+                      >
+                        <LayoutDashboard className="w-4 h-4" />
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    <Link 
+                      href="/orders" 
+                      onClick={() => setIsDropdownOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-text-secondary hover:bg-background hover:text-primary-green transition-colors"
+                    >
+                      <UserIcon className="w-4 h-4" />
+                      My Orders
+                    </Link>
+                    <button 
+                      onClick={() => {
+                        setIsDropdownOpen(false);
+                        signOut();
+                      }}
+                      className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-danger hover:bg-danger/5 transition-colors border-t border-border mt-1"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Log out
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <>
@@ -122,12 +177,48 @@ export const Navbar: React.FC = () => {
               <Link href="/contact" className="block text-lg font-medium text-text-primary hover:text-primary-green" onClick={() => setIsMobileMenuOpen(false)}>Contact</Link>
             </nav>
             <div className="p-4 border-t border-border bg-background flex flex-col gap-3">
-              <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button variant="outline" className="w-full">Login</Button>
-              </Link>
-              <Link href="/auth/register" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button className="w-full">Sign up</Button>
-              </Link>
+              {isLoggedIn ? (
+                <>
+                  <div className="px-2 py-1 mb-2">
+                    <p className="text-sm font-semibold text-text-primary">{session?.user?.name}</p>
+                    <p className="text-xs text-text-muted truncate">{session?.user?.email}</p>
+                  </div>
+                  {isAdmin && (
+                    <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button className="w-full justify-start gap-2" variant="outline">
+                        <LayoutDashboard className="w-4 h-4" />
+                        Admin Dashboard
+                      </Button>
+                    </Link>
+                  )}
+                  <Link href="/orders" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button className="w-full justify-start gap-2" variant="outline">
+                      <UserIcon className="w-4 h-4" />
+                      My Orders
+                    </Button>
+                  </Link>
+                  <Button 
+                    className="w-full justify-start gap-2 text-danger border-danger/20 hover:bg-danger/5" 
+                    variant="outline"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      signOut();
+                    }}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Log out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full">Login</Button>
+                  </Link>
+                  <Link href="/auth/register" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button className="w-full">Sign up</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

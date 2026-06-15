@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { signIn } from 'next-auth/react';
+import { signIn, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 export default function AdminLoginPage() {
@@ -31,8 +31,17 @@ export default function AdminLoginPage() {
       if (res?.error) {
         setError('Invalid admin email or password');
       } else {
-        router.push('/admin');
-        router.refresh();
+        // Fetch the session to verify they have the ADMIN role
+        const sessionRes = await fetch('/api/auth/session');
+        const session = await sessionRes.json();
+
+        if (session?.user?.role === 'ADMIN') {
+          router.push('/admin');
+          router.refresh();
+        } else {
+          setError('Access denied: This portal is restricted to administrators.');
+          await signOut({ redirect: false });
+        }
       }
     } catch (e) {
       setError('An error occurred during login');
@@ -51,7 +60,7 @@ export default function AdminLoginPage() {
               <img src="/dash_pharmacy_logo.png" alt="Dash" className="h-10 w-auto object-contain" />
             </div>
           </div>
-          <h1 className="text-2xl font-serif text-text-primary mb-1 mt-2">Admin Portal</h1>
+          <h1 className="text-2xl font-serif text-text-primary mb-1 mt-2">Admin Login</h1>
           <p className="text-text-secondary text-sm">Sign in to manage Dash Pharmacy</p>
         </div>
 

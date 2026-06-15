@@ -55,11 +55,17 @@ export default function RegisterPage() {
         throw new Error(signInRes.error);
       }
 
-      // We don't know the role immediately, but the backend assigns ADMIN if it's the first user.
-      // Redirect to /admin as a reasonable default for the first user or just /shop.
-      // Let's redirect to /admin, and if they aren't admin, middleware pushes them to login.
-      router.push('/admin');
+      // Fetch the session to determine the user's role
+      const sessionRes = await fetch('/api/auth/session');
+      const session = await sessionRes.json();
+      
       router.refresh();
+      
+      if (session?.user?.role === 'ADMIN') {
+        router.push('/admin');
+      } else {
+        router.push('/');
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {

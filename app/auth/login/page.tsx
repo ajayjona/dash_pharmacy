@@ -41,10 +41,19 @@ export default function LoginPage() {
       if (res?.error) {
         setErrors({ general: 'Invalid email or password' });
       } else {
-        // If login successful, redirect to admin (since only admin is supported via credentials currently)
-        // In a real app we'd check their role
-        router.push('/admin');
+        // Fetch the session to determine the user's role
+        const sessionRes = await fetch('/api/auth/session');
+        const session = await sessionRes.json();
+        
         router.refresh();
+        
+        if (session?.user?.role === 'ADMIN') {
+          router.push('/admin');
+        } else {
+          const params = new URLSearchParams(window.location.search);
+          const callbackUrl = params.get('callbackUrl') || '/';
+          router.push(callbackUrl);
+        }
       }
     } catch (e) {
       setErrors({ general: 'An error occurred during login' });
