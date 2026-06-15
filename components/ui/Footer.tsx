@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Send, Share2, Globe } from 'lucide-react';
+import { Location01Icon } from 'hugeicons-react';
 
 export const Footer: React.FC = () => {
   return (
@@ -18,8 +19,9 @@ export const Footer: React.FC = () => {
             <p className="text-text-muted text-sm leading-relaxed max-w-xs mb-3">
               Dash Care is Uganda&apos;s premier online pharmacy, bringing you authentic medicines and healthcare products with fast, reliable delivery.
             </p>
-            <p className="text-text-muted text-xs leading-relaxed max-w-xs font-medium">
-               Bukoto-Kisaasi Road, Kampala
+            <p className="flex items-center gap-2 text-text-muted text-xs leading-relaxed max-w-xs font-medium">
+              <Location01Icon size={16} className="text-primary-green shrink-0" />
+              Bukoto-Kisaasi Road, Kampala
             </p>
           </div>
 
