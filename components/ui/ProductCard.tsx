@@ -42,25 +42,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         )}
       </div>
 
-      <div className="flex flex-col flex-1 p-5">
-        <div className="mb-1 text-xs text-text-muted">{category}</div>
+      <div className="flex flex-col flex-1 p-3 sm:p-5">
+        <div className="mb-1 text-[10px] sm:text-xs text-text-muted">{category}</div>
         <Link href={`/shop/${slug}`} className="flex-1">
-          <h3 className="text-text-primary font-medium line-clamp-2 leading-snug mb-3 hover:text-primary-green transition-colors">
+          <h3 className="text-sm sm:text-base text-text-primary font-medium line-clamp-2 leading-snug mb-2 sm:mb-3 hover:text-primary-green transition-colors">
             {name}
           </h3>
         </Link>
         
-        <div className="flex items-center justify-between mb-4 mt-auto">
+        <div className="flex items-center justify-between mb-3 sm:mb-4 mt-auto">
           <div>
-            <span className="font-mono font-bold text-primary-green text-lg">
+            <span className="font-mono font-bold text-primary-green text-base sm:text-lg">
               {formatPrice(price)}
             </span>
             {originalPrice && (
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-xs text-text-muted line-through">
+              <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5">
+                <span className="text-[10px] sm:text-xs text-text-muted line-through">
                   {formatPrice(originalPrice)}
                 </span>
-                <span className="text-[10px] bg-warning text-surface px-1.5 py-0.5 rounded font-bold">
+                <span className="text-[9px] sm:text-[10px] bg-warning text-surface px-1 sm:px-1.5 py-0.5 rounded font-bold">
                   SALE
                 </span>
               </div>
@@ -71,7 +71,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <Button
           variant={inStock ? (requiresPrescription ? 'outline' : 'primary') : 'ghost'}
           disabled={!inStock}
-          className="w-full"
+          className="w-full text-xs sm:text-sm py-2 sm:py-2.5 h-auto"
           onClick={() => {
             if (requiresPrescription) {
               window.location.href = `/shop/${slug}`;
@@ -84,7 +84,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             'View details'
           ) : (
             <>
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 shrink-0" />
               Add to cart
             </>
           )}

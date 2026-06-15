@@ -6,6 +6,13 @@ import { ProductCard } from '@/components/ui/ProductCard';
 import { Button } from '@/components/ui/Button';
 
 const CATEGORIES = ['All', 'Pain Relief', 'Vitamins', 'Antibiotics', 'Skincare', 'Baby & Mother', 'First Aid', 'Digestive Health', "Men's Health"];
+const PRICE_FILTERS = [
+  { id: 'all', label: 'Any price', min: 0, max: Infinity },
+  { id: 'under_10k', label: 'Under UGX 10,000', min: 0, max: 9999.99 },
+  { id: '10k_50k', label: 'UGX 10,000 — 50,000', min: 10000, max: 49999.99 },
+  { id: '50k_100k', label: 'UGX 50,000 — 100,000', min: 50000, max: 100000 },
+  { id: 'over_100k', label: 'Over UGX 100,000', min: 100000.01, max: Infinity },
+];
 const ITEMS_PER_PAGE = 8;
 
 export default function ShopPage() {
@@ -14,7 +21,7 @@ export default function ShopPage() {
   const [inStockOnly, setInStockOnly] = useState(false);
   const [prescriptionOnly, setPrescriptionOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [priceRange, setPriceRange] = useState<number>(150000);
+  const [activePriceFilter, setActivePriceFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('Relevance');
   const [products, setProducts] = useState<any[]>([]);
   const [isFetching, setIsFetching] = useState(true);
@@ -42,7 +49,12 @@ export default function ShopPage() {
       if (activeCategory !== 'All' && product.category !== activeCategory) return false;
       if (inStockOnly && !product.inStock) return false;
       if (prescriptionOnly && !product.requiresPrescription) return false;
-      if (product.price > priceRange) return false;
+      
+      const priceFilter = PRICE_FILTERS.find(f => f.id === activePriceFilter);
+      if (priceFilter) {
+        if (product.price < priceFilter.min || product.price > priceFilter.max) return false;
+      }
+      
       if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       return true;
     });
@@ -57,12 +69,12 @@ export default function ShopPage() {
     }
 
     return result;
-  }, [products, activeCategory, inStockOnly, prescriptionOnly, searchQuery, priceRange, sortBy]);
+  }, [products, activeCategory, inStockOnly, prescriptionOnly, searchQuery, activePriceFilter, sortBy]);
 
   // Reset pagination when any filter or sort option changes
   useEffect(() => {
     setVisibleCount(ITEMS_PER_PAGE);
-  }, [activeCategory, inStockOnly, prescriptionOnly, searchQuery, priceRange, sortBy]);
+  }, [activeCategory, inStockOnly, prescriptionOnly, searchQuery, activePriceFilter, sortBy]);
 
   // Intersection Observer for Infinite Scroll
   useEffect(() => {
@@ -180,20 +192,22 @@ export default function ShopPage() {
               </div>
 
               <div className="border-t border-border pt-6">
-                <h3 className="font-bold text-text-primary mb-4">Price range</h3>
-                <div className="px-2">
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="150000" 
-                    step="5000"
-                    value={priceRange}
-                    onChange={(e) => setPriceRange(Number(e.target.value))}
-                    className="w-full accent-primary-green mb-2 cursor-pointer" 
-                  />
-                  <div className="text-xs text-text-muted text-center font-mono">
-                    UGX 0 — UGX {priceRange.toLocaleString()}
-                  </div>
+                <h3 className="font-bold text-text-primary mb-4">Price</h3>
+                <div className="space-y-3">
+                  {PRICE_FILTERS.map((filter) => (
+                    <label key={filter.id} className="flex items-center gap-3 cursor-pointer group">
+                      <input 
+                        type="radio" 
+                        name="price"
+                        checked={activePriceFilter === filter.id}
+                        onChange={() => setActivePriceFilter(filter.id)}
+                        className="w-4 h-4 accent-primary-green cursor-pointer"
+                      />
+                      <span className={`text-sm ${activePriceFilter === filter.id ? 'text-primary-green font-medium' : 'text-text-secondary group-hover:text-text-primary'}`}>
+                        {filter.label}
+                      </span>
+                    </label>
+                  ))}
                 </div>
               </div>
 
@@ -230,7 +244,7 @@ export default function ShopPage() {
                     setInStockOnly(false);
                     setPrescriptionOnly(false);
                     setSearchQuery('');
-                    setPriceRange(150000);
+                    setActivePriceFilter('all');
                     setSortBy('Relevance');
                   }}
                 >
@@ -255,16 +269,16 @@ export default function ShopPage() {
             </div>
 
             <div className="sticky top-16 md:top-24 z-20 bg-background/80 backdrop-blur-md py-4 mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <span className="text-sm text-text-muted">
                   Showing {displayedProducts.length} of {filteredProducts.length} products
                 </span>
-                <div className="flex items-center gap-2 text-sm text-text-secondary">
-                  Sort by:
+                <div className="flex items-center gap-2 text-sm text-text-secondary w-full sm:w-auto">
+                  <span className="shrink-0">Sort by:</span>
                   <select 
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="bg-transparent border-none focus:ring-0 font-medium text-text-primary cursor-pointer focus:outline-none"
+                    className="bg-transparent border-none focus:ring-0 font-medium text-text-primary cursor-pointer focus:outline-none w-full sm:w-auto truncate"
                   >
                     <option value="Relevance">Relevance</option>
                     <option value="Price: low to high">Price: low to high</option>
@@ -275,7 +289,7 @@ export default function ShopPage() {
               </div>
 
               {/* Active Filters */}
-              {(activeCategory !== 'All' || inStockOnly || prescriptionOnly || priceRange < 150000) && (
+              {(activeCategory !== 'All' || inStockOnly || prescriptionOnly || activePriceFilter !== 'all') && (
                 <div className="flex flex-wrap gap-2 mt-4">
                   {activeCategory !== 'All' && (
                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-surface border border-border rounded-full text-xs font-medium text-text-secondary">
@@ -295,10 +309,10 @@ export default function ShopPage() {
                       <button onClick={() => setPrescriptionOnly(false)}><X className="w-3 h-3 hover:text-danger" /></button>
                     </span>
                   )}
-                  {priceRange < 150000 && (
+                  {activePriceFilter !== 'all' && (
                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-surface border border-border rounded-full text-xs font-medium text-text-secondary">
-                      Max: UGX {priceRange.toLocaleString()}
-                      <button onClick={() => setPriceRange(150000)}><X className="w-3 h-3 hover:text-danger" /></button>
+                      {PRICE_FILTERS.find(f => f.id === activePriceFilter)?.label}
+                      <button onClick={() => setActivePriceFilter('all')}><X className="w-3 h-3 hover:text-danger" /></button>
                     </span>
                   )}
                 </div>
@@ -309,7 +323,7 @@ export default function ShopPage() {
               <div className="text-center py-20 bg-surface rounded-xl border border-border">
                 <h3 className="text-lg font-medium text-text-primary mb-2">No products found</h3>
                 <p className="text-text-muted mb-4">Try adjusting your filters or search query.</p>
-                <Button variant="outline" onClick={() => { setActiveCategory('All'); setInStockOnly(false); setPrescriptionOnly(false); setSearchQuery(''); setPriceRange(150000); setSortBy('Relevance'); }}>
+                <Button variant="outline" onClick={() => { setActiveCategory('All'); setInStockOnly(false); setPrescriptionOnly(false); setSearchQuery(''); setActivePriceFilter('all'); setSortBy('Relevance'); }}>
                   Clear filters
                 </Button>
               </div>
