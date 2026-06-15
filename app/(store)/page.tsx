@@ -46,7 +46,6 @@ export default async function HomePage() {
     originalPrice: p.originalPrice ?? undefined,
     description: p.description ?? undefined,
     stockQty: p.stockQty ?? undefined,
-    images: p.images ?? undefined,
   }));
   
   const bestSellers = products;

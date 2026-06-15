@@ -245,7 +245,7 @@ export default function AdminOrdersPage() {
               <div>
                 <h3 className="font-bold text-text-primary mb-3">Order Items</h3>
                 <div className="border border-border rounded-xl overflow-hidden divide-y divide-border">
-                  {viewingOrder.items.map(item => (
+                  {viewingOrder.items.map((item: any) => (
                     <div key={item.productId} className="p-3 flex items-center gap-3 bg-surface">
                       <div className="w-12 h-12 relative bg-background border border-border rounded">
                         <Image src={item.image} alt={item.name} fill className="object-cover" />

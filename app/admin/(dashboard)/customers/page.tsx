@@ -105,7 +105,7 @@ export default function AdminCustomersPage() {
                   {customer.role === 'ADMIN' ? (
                     <Badge variant="success" className="flex w-fit items-center gap-1"><ShieldCheck className="w-3 h-3"/> Admin</Badge>
                   ) : (
-                    <Badge variant="outline">Customer</Badge>
+                    <Badge variant="neutral">Customer</Badge>
                   )}
                 </td>
                 <td className="p-4 text-right">
