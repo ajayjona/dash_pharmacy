@@ -57,7 +57,7 @@ export default function ShopPage() {
     }
 
     return result;
-  }, [activeCategory, inStockOnly, prescriptionOnly, searchQuery, priceRange, sortBy]);
+  }, [products, activeCategory, inStockOnly, prescriptionOnly, searchQuery, priceRange, sortBy]);
 
   // Reset pagination when any filter or sort option changes
   useEffect(() => {
