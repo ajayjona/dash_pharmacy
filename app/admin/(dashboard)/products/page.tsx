@@ -260,11 +260,15 @@ export default function AdminProductsPage() {
     setProducts(prev => prev.filter(p => p.id !== id));
     
     try {
-      await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to delete product');
+      }
       fetchStats();
       toast.success("Product deleted successfully");
-    } catch (err) {
-      toast.error("Failed to delete product");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete product");
       setPage(0);
       fetchProducts(0);
     }

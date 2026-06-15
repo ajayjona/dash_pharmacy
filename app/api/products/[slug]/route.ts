@@ -74,8 +74,12 @@ export async function DELETE(request: Request, { params }: { params: { slug: str
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to delete product:', error);
-    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to delete product',
+      details: error.message,
+      stack: error.stack
+    }, { status: 500 });
   }
 }

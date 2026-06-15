@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, ShoppingCart, Menu, X, LogOut, LayoutDashboard, User as UserIcon } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
@@ -13,11 +13,17 @@ export const Navbar: React.FC = () => {
   const itemCount = useAppSelector(state => state.cart.itemCount);
   const { user, isAuthenticated } = useAppSelector(state => state.auth);
   
+  const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  const isLoggedIn = isAuthenticated;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  const isLoggedIn = mounted ? isAuthenticated : false;
+  const displayItemCount = mounted ? itemCount : 0;
   const isAdmin = user?.role === 'ADMIN';
 
   const getInitials = (name?: string | null) => {
@@ -75,9 +81,9 @@ export const Navbar: React.FC = () => {
             onClick={() => dispatch(openCart())}
           >
             <ShoppingCart className="w-5 h-5" />
-            {itemCount > 0 && (
+            {displayItemCount > 0 && (
               <span className="absolute top-0 right-0 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-surface bg-primary-green rounded-full transform translate-x-1/4 -translate-y-1/4">
-                {itemCount}
+                {displayItemCount}
               </span>
             )}
           </button>
