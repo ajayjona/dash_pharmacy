@@ -21,7 +21,6 @@ export default function RegisterPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   
-  // Calculate password strength (0 to 3)
   const strength = password.length === 0 ? 0 : password.length < 6 ? 1 : password.length < 10 ? 2 : 3;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,9 +46,9 @@ export default function RegisterPage() {
       }
 
       dispatch(loginRequest({ email, password, callbackUrl: '/' }));
+      // Do not stop loading here; let the spinner spin while Redux saga redirects
     } catch (err: any) {
       setError(err.message);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -143,7 +142,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="flex items-start gap-2 mt-2 pt-2">
-            <input type="checkbox" required className="mt-1 w-4 h-4 text-primary-green focus:ring-primary-green border-border rounded" />
+            <input type="checkbox" required className="mt-1 w-4 h-4 !text-primary-green focus:ring-primary-green border-border rounded" />
             <p className="text-xs text-text-secondary leading-snug">
               I agree to the <Link href="#" className="text-primary-green hover:underline">Terms of Service</Link> and <Link href="#" className="text-primary-green hover:underline">Privacy Policy</Link>.
             </p>

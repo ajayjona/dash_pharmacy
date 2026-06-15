@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     // If we have a Resend API key, send a real email
     if (process.env.RESEND_API_KEY) {
       await resend.emails.send({
-        from: 'Dash Pharmacy <noreply@dashpharmacy.com>', // Update with your verified domain
+        from: 'Dash Pharmacy <noreply@dashpharmacy.com>', 
         to: email,
         subject: 'Password Reset Request - Dash Pharmacy',
         html: `

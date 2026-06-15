@@ -4,40 +4,62 @@ import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
   try {
-    const { name, email, phone, password, title, image } = await request.json();
+    const { token, name, email, phone, password, title, image } = await request.json();
 
-    if (!name || !email || !password || !title || !image) {
-      return NextResponse.json({ error: 'Missing mandatory administrative profile fields' }, { status: 400 });
+    if (!token || !name || !email || !password || !title || !image) {
+      return NextResponse.json({ error: 'Missing mandatory administrative profile fields or token' }, { status: 400 });
     }
 
-    const existingUser = await prisma.customer.findUnique({
-      where: { email },
-    });
+    const newUser = await prisma.$transaction(async (tx) => {
+      const invitation = await tx.adminInvitation.findUnique({
+        where: { token }
+      });
 
-    if (existingUser) {
-      return NextResponse.json({ error: 'An account with this email already exists' }, { status: 400 });
-    }
+      if (!invitation) {
+        throw new Error('Invalid invitation token');
+      }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+      if (invitation.used) {
+        throw new Error('This invitation has already been used');
+      }
 
-    // To ensure security, an admin account can only be created via this endpoint if there are currently NO admins.
-    // OR if we wanted to allow multiple admins, we'd add an invite code logic. For MVP, we'll assign ADMIN.
-    // Since this is a dedicated admin setup route, we assign ADMIN role.
-    const adminCount = await prisma.customer.count({ where: { role: 'ADMIN' } });
-    if (adminCount >= 5) {
-      return NextResponse.json({ error: 'Maximum number of administrators reached. Setup restricted.' }, { status: 403 });
-    }
+      if (invitation.expiresAt < new Date()) {
+        throw new Error('This invitation has expired');
+      }
 
-    const newUser = await prisma.customer.create({
-      data: {
-        name,
-        email,
-        phone: phone || '',
-        password: hashedPassword,
-        role: 'ADMIN',
-        title,
-        image
-      },
+      if (invitation.email.toLowerCase() !== email.toLowerCase()) {
+        throw new Error('Email does not match the invitation');
+      }
+
+      const existingUser = await tx.customer.findUnique({
+        where: { email },
+      });
+
+      if (existingUser) {
+        throw new Error('An account with this email already exists');
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const createdUser = await tx.customer.create({
+        data: {
+          name,
+          email,
+          phone: phone || '',
+          password: hashedPassword,
+          role: 'ADMIN', // Hardcoded safely server-side because the token dictates ADMIN creation
+          title,
+          image
+        },
+      });
+
+      // Mark invitation as used
+      await tx.adminInvitation.update({
+        where: { id: invitation.id },
+        data: { used: true }
+      });
+
+      return createdUser;
     });
 
     // Send welcome/notification email to the new admin
@@ -71,14 +93,15 @@ export async function POST(request: Request) {
         });
       } catch (emailError) {
         console.error('Failed to send admin welcome email:', emailError);
-        // Continue anyway since the user was created successfully
       }
     }
 
     const { password: _, ...userWithoutPassword } = newUser;
     return NextResponse.json(userWithoutPassword, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to register admin:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    const status = message.includes('token') || message.includes('invitation') || message.includes('exists') ? 400 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }

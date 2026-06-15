@@ -13,12 +13,11 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
+  const [isLoading, setIsLoading] = useState(false);
   const dispatch = useAppDispatch();
-  const { isLoading, error: authError } = useAppSelector(state => state.auth);
+  const { error: authError } = useAppSelector(state => state.auth);
   
   const router = useRouter();
-  // We can't use useSearchParams directly without suspense boundary warning, so we use optional fallback or just redirect to /admin by default if they are admin.
-  // Actually Next.js 14 requires Suspense if we use useSearchParams, so we'll just redirect to /admin after success.
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,15 +31,19 @@ export default function LoginPage() {
       return;
     }
 
+    setIsLoading(true);
+
     const params = new URLSearchParams(window.location.search);
     const callbackUrl = params.get('callbackUrl') || '/';
     
     dispatch(loginRequest({ email, password, callbackUrl }));
+    // Do not stop loading here; let the spinner spin while Redux saga redirects
   };
 
   React.useEffect(() => {
     if (authError) {
       setErrors({ general: authError });
+      setIsLoading(false);
     }
   }, [authError]);
 

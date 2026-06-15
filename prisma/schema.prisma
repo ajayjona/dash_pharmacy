@@ -43,6 +43,7 @@ model Customer {
   resetTokenExpiry  DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  createdInvitations AdminInvitation[] @relation("AdminInvitations")
 }
 
 model Address {
@@ -88,4 +89,17 @@ model OrderItem {
   price     Float
   quantity  Int
   image     String
+}
+
+model AdminInvitation {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  token     String   @unique
+  role      String   @default("ADMIN")
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdBy String
+  creator   Customer @relation("AdminInvitations", fields: [createdBy], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

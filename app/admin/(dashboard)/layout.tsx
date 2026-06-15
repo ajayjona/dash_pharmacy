@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { LayoutDashboard, ShoppingBag, Package, Users, BarChart2, Settings } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Package, Users, BarChart2, Settings, UserPlus } from 'lucide-react';
 import LogoutButton from '@/components/admin/LogoutButton';
 import ActiveLink from '@/components/admin/ActiveLink';
 import { getServerSession } from 'next-auth';
@@ -89,6 +89,15 @@ export default async function AdminLayout({
           >
             <Users className="w-5 h-5 md:w-5 md:h-5" />
             <span className="text-[10px] md:text-sm">Customers</span>
+          </ActiveLink>
+          <ActiveLink 
+            href="/admin/invitations" 
+            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg transition-colors"
+            inactiveClassName="text-white/70 hover:bg-white/10 hover:text-white font-medium"
+            activeClassName="bg-primary-green text-white font-bold shadow-md border border-white/20"
+          >
+            <UserPlus className="w-5 h-5 md:w-5 md:h-5" />
+            <span className="text-[10px] md:text-sm">Team</span>
           </ActiveLink>
           <div className="hidden md:flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg text-white/40 cursor-not-allowed">
             <BarChart2 className="w-5 h-5 md:w-5 md:h-5" />
