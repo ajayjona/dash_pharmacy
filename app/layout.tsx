@@ -1,25 +1,8 @@
 import type { Metadata } from "next";
-import { DM_Serif_Display, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 import { Providers } from "@/components/Providers";
 import NextTopLoader from 'nextjs-toploader';
-
-const dmSerif = DM_Serif_Display({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-dm-serif",
-});
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-jakarta",
-});
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains",
-});
 
 export const metadata: Metadata = {
   title: "Dash Care | Your health, delivered.",
@@ -33,8 +16,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet" />
+      </head>
       <body
-        className={`${dmSerif.variable} ${jakarta.variable} ${jetbrains.variable} font-sans antialiased text-text-primary bg-background`}
+        className={`font-sans antialiased text-text-primary bg-background`}
       >
         <NextTopLoader 
           color="#016A40"
