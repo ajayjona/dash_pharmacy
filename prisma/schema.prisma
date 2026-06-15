@@ -39,6 +39,8 @@ model Customer {
   image     String?   // Profile picture URL
   addresses Address[]
   orders    Order[]
+  resetToken        String?
+  resetTokenExpiry  DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }

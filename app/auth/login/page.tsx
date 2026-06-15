@@ -101,7 +101,7 @@ export default function LoginPage() {
             {errors.password && <p className="text-danger text-xs mt-1">{errors.password}</p>}
             
             <div className="text-right mt-2">
-              <Link href="#" className="text-xs font-medium text-primary-green hover:underline">Forgot password?</Link>
+              <Link href="/auth/forgot-password" className="text-xs font-medium text-primary-green hover:underline">Forgot password?</Link>
             </div>
           </div>
 
