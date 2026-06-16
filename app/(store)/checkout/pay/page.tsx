@@ -14,7 +14,7 @@ function PaymentContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   
-  const [activeTab, setActiveTab] = useState<'mtn' | 'airtel' | 'card' | 'cod'>('mtn');
+  const [activeTab, setActiveTab] = useState<'cod' | 'mtn' | 'airtel' | 'card'>('cod');
   const [phone, setPhone] = useState('');
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success'>('idle');
   const [countdown, setCountdown] = useState(60);
@@ -62,7 +62,7 @@ function PaymentContent() {
       setPaymentStatus('success');
       setTimeout(() => {
         dispatch(clearCart());
-        router.push(`/orders/${orderNumber}/confirm`);
+        router.replace(`/orders/${orderId}/confirm`);
       }, 2000);
     }, activeTab === 'cod' ? 1000 : 4000);
   };
@@ -78,6 +78,12 @@ function PaymentContent() {
 
         <div className="bg-surface rounded-xl border border-border overflow-hidden shadow-sm mb-8">
           <div className="flex border-b border-border">
+            <button 
+              className={`flex-1 py-4 text-sm font-bold transition-colors ${activeTab === 'cod' ? 'bg-primary-light text-primary-green border-b-2 border-primary-green' : 'text-text-muted hover:text-text-primary'}`}
+              onClick={() => setActiveTab('cod')}
+            >
+              Cash on Delivery
+            </button>
             <button 
               className={`flex-1 py-4 text-sm font-bold transition-colors ${activeTab === 'mtn' ? 'bg-[#FFCC00]/10 text-[#FFCC00] border-b-2 border-[#FFCC00]' : 'text-text-muted hover:text-text-primary'}`}
               onClick={() => setActiveTab('mtn')}
@@ -95,12 +101,6 @@ function PaymentContent() {
               onClick={() => setActiveTab('card')}
             >
               Card
-            </button>
-            <button 
-              className={`flex-1 py-4 text-sm font-bold transition-colors ${activeTab === 'cod' ? 'bg-primary-light text-primary-green border-b-2 border-primary-green' : 'text-text-muted hover:text-text-primary'}`}
-              onClick={() => setActiveTab('cod')}
-            >
-              Cash on Delivery
             </button>
           </div>
 

@@ -102,7 +102,7 @@ export default function CheckoutPage() {
 
         const order = await res.json();
         toast.success('Order placed successfully!');
-        router.push(`/checkout/pay?orderId=${order.id}`);
+        router.replace(`/checkout/pay?orderId=${order.id}`);
       } catch (e) {
         console.error(e);
         toast.error('Failed to place order. Please try again.');
