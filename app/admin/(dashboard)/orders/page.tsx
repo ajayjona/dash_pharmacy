@@ -195,7 +195,6 @@ export default function AdminOrdersPage() {
         </table>
       </div>
 
-      {/* Slide-in Order Details Drawer */}
       {viewingOrder && (
         <>
           <div className="fixed inset-0 bg-text-primary/50 z-50 transition-opacity" onClick={() => setViewingOrder(null)} />

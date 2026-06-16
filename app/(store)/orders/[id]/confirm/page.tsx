@@ -91,22 +91,22 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ id
                 <span className="text-xs font-bold text-primary-green text-center">Order<br/>confirmed</span>
               </div>
               <div className="flex flex-col items-center flex-1">
-                <div className={`w-10 h-10 rounded-full ${order.status !== 'pending' ? 'bg-primary-green text-surface' : 'bg-background border-2 border-border text-text-muted'} flex items-center justify-center mb-3 ring-4 ring-surface`}>
+                <div className={`w-10 h-10 rounded-full ${order.status === 'packing' || order.status === 'dispatched' || order.status === 'delivered' ? 'bg-primary-green text-surface' : 'bg-background border-2 border-border text-text-muted'} flex items-center justify-center mb-3 ring-4 ring-surface`}>
                   <Package className="w-5 h-5" />
                 </div>
-                <span className={`text-xs ${order.status !== 'pending' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Being<br/>packed</span>
+                <span className={`text-xs ${order.status === 'packing' || order.status === 'dispatched' || order.status === 'delivered' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Being<br/>packed</span>
               </div>
               <div className="flex flex-col items-center flex-1">
-                <div className={`w-10 h-10 rounded-full ${order.status === 'delivering' || order.status === 'completed' ? 'bg-primary-green text-surface' : 'bg-background border-2 border-border text-text-muted'} flex items-center justify-center mb-3 ring-4 ring-surface`}>
+                <div className={`w-10 h-10 rounded-full ${order.status === 'dispatched' || order.status === 'delivered' ? 'bg-primary-green text-surface' : 'bg-background border-2 border-border text-text-muted'} flex items-center justify-center mb-3 ring-4 ring-surface`}>
                   <Truck className="w-5 h-5" />
                 </div>
-                <span className={`text-xs ${order.status === 'delivering' || order.status === 'completed' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Out for<br/>delivery</span>
+                <span className={`text-xs ${order.status === 'dispatched' || order.status === 'delivered' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Out for<br/>delivery</span>
               </div>
               <div className="flex flex-col items-center flex-1">
-                <div className={`w-10 h-10 rounded-full ${order.status === 'completed' ? 'bg-primary-green text-surface' : 'bg-background border-2 border-border text-text-muted'} flex items-center justify-center mb-3 ring-4 ring-surface`}>
+                <div className={`w-10 h-10 rounded-full ${order.status === 'delivered' ? 'bg-primary-green text-surface' : 'bg-background border-2 border-border text-text-muted'} flex items-center justify-center mb-3 ring-4 ring-surface`}>
                   <Home className="w-5 h-5" />
                 </div>
-                <span className={`text-xs ${order.status === 'completed' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Delivered</span>
+                <span className={`text-xs ${order.status === 'delivered' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Delivered</span>
               </div>
             </div>
           </div>

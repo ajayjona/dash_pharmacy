@@ -22,17 +22,30 @@ export default function CartPage() {
   const [activeOrders, setActiveOrders] = useState<any[]>([]);
 
   React.useEffect(() => {
-    if (isAuthenticated) {
-      fetch('/api/orders', { cache: 'no-store' })
-        .then(res => res.json())
-        .then(data => {
-          if (Array.isArray(data)) {
-            const active = data.filter(o => o.status !== 'completed' && o.status !== 'cancelled');
-            setActiveOrders(active);
-          }
-        })
-        .catch(console.error);
-    }
+    const fetchActiveOrders = () => {
+      if (isAuthenticated) {
+        fetch(`/api/orders?_t=${Date.now()}`, { cache: 'no-store' })
+          .then(res => res.json())
+          .then(data => {
+            if (Array.isArray(data)) {
+              const active = data.filter(o => o.status !== 'delivered' && o.status !== 'cancelled');
+              setActiveOrders(active);
+            }
+          })
+          .catch(console.error);
+      }
+    };
+
+    fetchActiveOrders();
+
+    // Aggressively refetch if the user navigates back to this tab or uses the back button
+    window.addEventListener('focus', fetchActiveOrders);
+    window.addEventListener('popstate', fetchActiveOrders);
+    
+    return () => {
+      window.removeEventListener('focus', fetchActiveOrders);
+      window.removeEventListener('popstate', fetchActiveOrders);
+    };
   }, [isAuthenticated]);
 
   const handleApplyPromo = () => {
@@ -71,7 +84,7 @@ export default function CartPage() {
             <div className="relative pt-2">
               <div className="absolute top-7 left-[10%] right-[10%] h-0.5 bg-border -z-10"></div>
               <div className="absolute top-7 left-[10%] h-0.5 bg-primary-green -z-10 transition-all duration-1000" 
-                   style={{ width: order.status === 'delivering' ? '40%' : order.status === 'completed' ? '80%' : '0%' }}></div>
+                   style={{ width: order.status === 'dispatched' || order.status === 'delivered' ? '50%' : '0%' }}></div>
               
               <div className="flex justify-between relative z-10">
                 <div className="flex flex-col items-center flex-1">
@@ -81,22 +94,22 @@ export default function CartPage() {
                   <span className="text-xs font-bold text-primary-green text-center">Order<br/>confirmed</span>
                 </div>
                 <div className="flex flex-col items-center flex-1">
-                  <div className={`w-10 h-10 rounded-full ${order.status !== 'pending' ? 'bg-primary-green text-surface ring-primary-light/30' : 'bg-background border-2 border-border text-text-muted ring-background'} flex items-center justify-center mb-3 ring-4`}>
+                  <div className={`w-10 h-10 rounded-full ${order.status === 'packing' || order.status === 'dispatched' || order.status === 'delivered' ? 'bg-primary-green text-surface ring-primary-light/30' : 'bg-background border-2 border-border text-text-muted ring-background'} flex items-center justify-center mb-3 ring-4`}>
                     <Package className="w-5 h-5" />
                   </div>
-                  <span className={`text-xs ${order.status !== 'pending' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Being<br/>packed</span>
+                  <span className={`text-xs ${order.status === 'packing' || order.status === 'dispatched' || order.status === 'delivered' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Being<br/>packed</span>
                 </div>
                 <div className="flex flex-col items-center flex-1">
-                  <div className={`w-10 h-10 rounded-full ${order.status === 'delivering' || order.status === 'completed' ? 'bg-primary-green text-surface ring-primary-light/30' : 'bg-background border-2 border-border text-text-muted ring-background'} flex items-center justify-center mb-3 ring-4`}>
+                  <div className={`w-10 h-10 rounded-full ${order.status === 'dispatched' || order.status === 'delivered' ? 'bg-primary-green text-surface ring-primary-light/30' : 'bg-background border-2 border-border text-text-muted ring-background'} flex items-center justify-center mb-3 ring-4`}>
                     <Truck className="w-5 h-5" />
                   </div>
-                  <span className={`text-xs ${order.status === 'delivering' || order.status === 'completed' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Out for<br/>delivery</span>
+                  <span className={`text-xs ${order.status === 'dispatched' || order.status === 'delivered' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Out for<br/>delivery</span>
                 </div>
                 <div className="flex flex-col items-center flex-1">
-                  <div className={`w-10 h-10 rounded-full ${order.status === 'completed' ? 'bg-primary-green text-surface ring-primary-light/30' : 'bg-background border-2 border-border text-text-muted ring-background'} flex items-center justify-center mb-3 ring-4`}>
+                  <div className={`w-10 h-10 rounded-full ${order.status === 'delivered' ? 'bg-primary-green text-surface ring-primary-light/30' : 'bg-background border-2 border-border text-text-muted ring-background'} flex items-center justify-center mb-3 ring-4`}>
                     <Home className="w-5 h-5" />
                   </div>
-                  <span className={`text-xs ${order.status === 'completed' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Delivered</span>
+                  <span className={`text-xs ${order.status === 'delivered' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Delivered</span>
                 </div>
               </div>
             </div>
