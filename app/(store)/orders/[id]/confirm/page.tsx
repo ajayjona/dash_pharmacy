@@ -147,12 +147,16 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ id
                 <span className="text-text-secondary">Delivery</span>
                 <span className="font-medium">{formatPrice(order.deliveryFee)}</span>
               </div>
+              <div className="flex justify-between items-center text-sm mb-2">
+                <span className="text-text-secondary">Payment method</span>
+                <span className="font-medium capitalize">{order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod}</span>
+              </div>
               <div className="flex justify-between items-center text-sm mb-4">
                 <span className="text-text-secondary">Payment status</span>
-                <span className="font-medium uppercase text-primary-green">{order.paymentStatus}</span>
+                <span className={`font-medium uppercase ${order.paymentStatus === 'paid' ? 'text-primary-green' : 'text-[#F4A820]'}`}>{order.paymentStatus}</span>
               </div>
               <div className="flex justify-between items-center border-t border-border pt-4">
-                <span className="font-bold text-text-primary">Total paid</span>
+                <span className="font-bold text-text-primary">{order.paymentStatus === 'paid' ? 'Total paid' : 'Total due'}</span>
                 <span className="font-mono font-bold text-primary-green text-lg">{formatPrice(order.total)}</span>
               </div>
             </div>

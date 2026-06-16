@@ -40,13 +40,14 @@ export async function POST(request: Request) {
     let finalAddressId = addressId;
 
     if (!finalAddressId) {
+      const addrData = addressData || {};
       // Create new address
       const address = await prisma.address.create({
         data: {
-          name: session.user.name || 'Customer',
-          phone: addressData.phone || 'Unknown',
-          street: addressData.street || 'Unknown',
-          district: addressData.district || 'Kampala',
+          name: session.user?.name || 'Customer',
+          phone: addrData.phone || 'Unknown',
+          street: addrData.street || 'Unknown',
+          district: addrData.district || 'Kampala',
           customerId: (session.user as any).id,
         }
       });
@@ -87,6 +88,9 @@ export async function POST(request: Request) {
     return NextResponse.json(order);
   } catch (error) {
     console.error('Failed to create order:', error);
-    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to create order', 
+      details: error instanceof Error ? error.message : String(error) 
+    }, { status: 500 });
   }
 }

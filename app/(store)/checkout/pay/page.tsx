@@ -14,7 +14,7 @@ function PaymentContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   
-  const [activeTab, setActiveTab] = useState<'mtn' | 'airtel' | 'card'>('mtn');
+  const [activeTab, setActiveTab] = useState<'mtn' | 'airtel' | 'card' | 'cod'>('mtn');
   const [phone, setPhone] = useState('');
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success'>('idle');
   const [countdown, setCountdown] = useState(60);
@@ -44,24 +44,27 @@ function PaymentContent() {
 
   const handlePay = async () => {
     setPaymentStatus('processing');
-    setCountdown(60);
+    setCountdown(activeTab === 'cod' ? 2 : 60); // COD confirms quickly
     
-    // Simulate successful payment after 4 seconds
+    // Simulate successful payment after delay
     setTimeout(async () => {
       if (orderId) {
         await fetch(`/api/orders/${orderId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentStatus: 'paid' })
+          body: JSON.stringify({ 
+            paymentStatus: activeTab === 'cod' ? 'pending' : 'paid',
+            paymentMethod: activeTab
+          })
         });
       }
       
       setPaymentStatus('success');
       setTimeout(() => {
         dispatch(clearCart());
-        router.push(`/orders/${orderId}/confirm`);
+        router.push(`/orders/${orderNumber}/confirm`);
       }, 2000);
-    }, 4000);
+    }, activeTab === 'cod' ? 1000 : 4000);
   };
 
   return (
@@ -93,6 +96,12 @@ function PaymentContent() {
             >
               Card
             </button>
+            <button 
+              className={`flex-1 py-4 text-sm font-bold transition-colors ${activeTab === 'cod' ? 'bg-primary-light text-primary-green border-b-2 border-primary-green' : 'text-text-muted hover:text-text-primary'}`}
+              onClick={() => setActiveTab('cod')}
+            >
+              Cash on Delivery
+            </button>
           </div>
 
           <div className="p-6 md:p-8">
@@ -101,20 +110,26 @@ function PaymentContent() {
                 <div className="w-16 h-16 bg-primary-light rounded-full flex items-center justify-center text-primary-green mb-4">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
-                <h3 className="text-xl font-bold text-text-primary mb-2">Payment confirmed!</h3>
-                <p className="text-text-secondary text-sm">Redirecting to your order confirmation...</p>
+                <h3 className="text-xl font-bold text-text-primary mb-2">Order confirmed!</h3>
+                <p className="text-text-secondary text-sm">Redirecting to your receipt...</p>
               </div>
             ) : paymentStatus === 'processing' ? (
               <div className="flex flex-col items-center justify-center py-8 animate-in fade-in">
                 <Loader2 className="w-12 h-12 text-primary-green animate-spin mb-6" />
-                <h3 className="text-lg font-medium text-text-primary mb-2">Waiting for approval...</h3>
-                <p className="text-text-secondary text-sm mb-6 text-center max-w-sm">
-                  Please check your phone and enter your PIN to approve the payment prompt.
-                </p>
-                <div className="font-mono text-xl font-bold text-primary-green bg-primary-light px-4 py-2 rounded-lg mb-6">
-                  00:{countdown.toString().padStart(2, '0')}
-                </div>
-                {countdown === 0 && (
+                <h3 className="text-lg font-medium text-text-primary mb-2">
+                  {activeTab === 'cod' ? 'Confirming order...' : 'Waiting for approval...'}
+                </h3>
+                {activeTab !== 'cod' && (
+                  <>
+                    <p className="text-text-secondary text-sm mb-6 text-center max-w-sm">
+                      Please check your phone and enter your PIN to approve the payment prompt.
+                    </p>
+                    <div className="font-mono text-xl font-bold text-primary-green bg-primary-light px-4 py-2 rounded-lg mb-6">
+                      00:{countdown.toString().padStart(2, '0')}
+                    </div>
+                  </>
+                )}
+                {countdown === 0 && activeTab !== 'cod' && (
                   <Button variant="outline" onClick={() => setPaymentStatus('idle')}>Try again</Button>
                 )}
               </div>
@@ -180,13 +195,27 @@ function PaymentContent() {
                   </div>
                 )}
 
+                {activeTab === 'cod' && (
+                  <div className="space-y-4 mb-6">
+                    <div className="bg-primary-light/50 border border-primary-green/20 rounded-lg p-4 text-center">
+                      <div className="inline-flex w-12 h-12 bg-white rounded-full items-center justify-center text-primary-green mb-3 shadow-sm">
+                        <CheckCircle2 className="w-6 h-6" />
+                      </div>
+                      <h4 className="font-bold text-text-primary mb-1">Pay at your doorstep</h4>
+                      <p className="text-sm text-text-secondary">
+                        You can pay with cash or Mobile Money when your rider arrives with your order.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="text-center mb-6">
                   <span className="text-text-secondary text-sm">Amount to pay:</span>
                   <div className="text-3xl font-mono font-bold text-text-primary mt-1">{formatPrice(total)}</div>
                 </div>
 
                 <Button size="lg" className="w-full" onClick={handlePay} disabled={total === 0}>
-                  {activeTab === 'card' ? `Pay ${formatPrice(total)}` : 'Pay now'}
+                  {activeTab === 'cod' ? 'Confirm order' : activeTab === 'card' ? `Pay ${formatPrice(total)}` : 'Pay now'}
                 </Button>
 
               </div>
