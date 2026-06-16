@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import OrderQuickUpdate from '@/components/admin/OrderQuickUpdate';
 import { AlertTriangle, ArrowUpRight, RefreshCw } from 'lucide-react';
 import prisma from '@/lib/prisma';
 import { formatPrice } from '@/lib/formatters';
@@ -161,13 +162,7 @@ export default async function AdminDashboard() {
                       <td className="p-4 font-mono">{formatPrice(order.total)}</td>
                       <td className="p-4">{getStatusBadge(order.status)}</td>
                       <td className="p-4">
-                        <select className="text-xs border border-border rounded px-2 py-1 bg-surface focus:outline-none focus:border-primary-green cursor-pointer">
-                          <option value="">Update...</option>
-                          <option value="confirmed">Confirm</option>
-                          <option value="packing">Packing</option>
-                          <option value="dispatched">Dispatch</option>
-                          <option value="delivered">Delivered</option>
-                        </select>
+                        <OrderQuickUpdate orderId={order.id} currentStatus={order.status} />
                       </td>
                     </tr>
                   ))}
