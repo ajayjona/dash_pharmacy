@@ -58,6 +58,7 @@ function PaymentContent() {
       
       setPaymentStatus('success');
       setTimeout(() => {
+        dispatch(clearCart());
         router.push(`/orders/${orderId}/confirm`);
       }, 2000);
     }, 4000);

@@ -101,7 +101,6 @@ export default function CheckoutPage() {
         }
 
         const order = await res.json();
-        dispatch(clearCart());
         toast.success('Order placed successfully!');
         router.push(`/checkout/pay?orderId=${order.id}`);
       } catch (e) {
