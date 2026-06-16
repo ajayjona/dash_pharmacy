@@ -7,7 +7,15 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !(session.user as any).id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const isAdmin = (session.user as any).role === 'ADMIN';
+
     const orders = await prisma.order.findMany({
+      where: isAdmin ? {} : { customerId: (session.user as any).id },
       orderBy: { createdAt: 'desc' },
       include: {
         customer: true,

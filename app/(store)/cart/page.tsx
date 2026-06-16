@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Trash2, Minus, Plus, ShoppingCart, ArrowLeft, CheckCircle2, Lock } from 'lucide-react';
+import { Trash2, Minus, Plus, ShoppingCart, ArrowLeft, CheckCircle2, Lock, Package, Truck, Home, ChevronRight } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { updateQuantity, removeItem } from '@/store/slices/cartSlice';
 import { formatPrice } from '@/lib/formatters';
@@ -17,6 +17,23 @@ export default function CartPage() {
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
   const [promoError, setPromoError] = useState('');
   const router = useRouter();
+
+  const { isAuthenticated } = useAppSelector(state => state.auth);
+  const [activeOrders, setActiveOrders] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      fetch('/api/orders', { cache: 'no-store' })
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            const active = data.filter(o => o.status !== 'completed' && o.status !== 'cancelled');
+            setActiveOrders(active);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [isAuthenticated]);
 
   const handleApplyPromo = () => {
     if (promoCode.toUpperCase() === 'DASHCARE10') {
@@ -31,17 +48,80 @@ export default function CartPage() {
   const deliveryFee = subtotal > 50000 ? 0 : 5000;
   const total = subtotal - discount + deliveryFee;
 
+  const renderActiveOrders = () => {
+    if (activeOrders.length === 0) return null;
+    return (
+      <div className="mb-8 space-y-4">
+        {activeOrders.map(order => (
+          <div key={order.id} className="bg-primary-light/30 border border-primary-green/30 rounded-xl p-4 md:p-6 animate-in fade-in slide-in-from-top-4">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="font-bold text-text-primary text-lg">Active Order <span className="text-primary-green font-mono">#{order.orderNumber}</span></h3>
+                <p className="text-sm text-text-secondary">
+                  {order.items?.length || 0} items • {formatPrice(order.total)}
+                </p>
+              </div>
+              <Link href={`/orders/${order.id}/confirm`}>
+                <Button variant="outline" size="sm">
+                  View Receipt <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
+            
+            <div className="relative pt-2">
+              <div className="absolute top-7 left-[10%] right-[10%] h-0.5 bg-border -z-10"></div>
+              <div className="absolute top-7 left-[10%] h-0.5 bg-primary-green -z-10 transition-all duration-1000" 
+                   style={{ width: order.status === 'delivering' ? '40%' : order.status === 'completed' ? '80%' : '0%' }}></div>
+              
+              <div className="flex justify-between relative z-10">
+                <div className="flex flex-col items-center flex-1">
+                  <div className="w-10 h-10 rounded-full bg-primary-green text-surface flex items-center justify-center mb-3 ring-4 ring-primary-light/30">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold text-primary-green text-center">Order<br/>confirmed</span>
+                </div>
+                <div className="flex flex-col items-center flex-1">
+                  <div className={`w-10 h-10 rounded-full ${order.status !== 'pending' ? 'bg-primary-green text-surface ring-primary-light/30' : 'bg-background border-2 border-border text-text-muted ring-background'} flex items-center justify-center mb-3 ring-4`}>
+                    <Package className="w-5 h-5" />
+                  </div>
+                  <span className={`text-xs ${order.status !== 'pending' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Being<br/>packed</span>
+                </div>
+                <div className="flex flex-col items-center flex-1">
+                  <div className={`w-10 h-10 rounded-full ${order.status === 'delivering' || order.status === 'completed' ? 'bg-primary-green text-surface ring-primary-light/30' : 'bg-background border-2 border-border text-text-muted ring-background'} flex items-center justify-center mb-3 ring-4`}>
+                    <Truck className="w-5 h-5" />
+                  </div>
+                  <span className={`text-xs ${order.status === 'delivering' || order.status === 'completed' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Out for<br/>delivery</span>
+                </div>
+                <div className="flex flex-col items-center flex-1">
+                  <div className={`w-10 h-10 rounded-full ${order.status === 'completed' ? 'bg-primary-green text-surface ring-primary-light/30' : 'bg-background border-2 border-border text-text-muted ring-background'} flex items-center justify-center mb-3 ring-4`}>
+                    <Home className="w-5 h-5" />
+                  </div>
+                  <span className={`text-xs ${order.status === 'completed' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Delivered</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   if (items.length === 0) {
     return (
-      <div className="bg-background min-h-[60vh] flex flex-col items-center justify-center px-4">
-        <div className="w-24 h-24 bg-primary-light rounded-full flex items-center justify-center text-primary-green mb-6">
-          <ShoppingCart className="w-12 h-12" />
+      <div className="bg-background min-h-screen pb-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+          {renderActiveOrders()}
+          <div className="flex flex-col items-center justify-center py-12 px-4 bg-surface rounded-xl border border-border mt-4">
+            <div className="w-24 h-24 bg-primary-light rounded-full flex items-center justify-center text-primary-green mb-6">
+              <ShoppingCart className="w-12 h-12" />
+            </div>
+            <h1 className="text-3xl font-serif text-text-primary mb-2">Your cart is empty.</h1>
+            <p className="text-text-secondary mb-8">Looks like you haven&apos;t added anything yet.</p>
+            <Link href="/shop">
+              <Button size="lg">Start shopping</Button>
+            </Link>
+          </div>
         </div>
-        <h1 className="text-3xl font-serif text-text-primary mb-2">Your cart is empty.</h1>
-        <p className="text-text-secondary mb-8">Looks like you haven&apos;t added anything yet.</p>
-        <Link href="/shop">
-          <Button size="lg">Start shopping</Button>
-        </Link>
       </div>
     );
   }
@@ -49,6 +129,8 @@ export default function CartPage() {
   return (
     <div className="bg-background min-h-screen pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        {renderActiveOrders()}
+        
         <h1 className="text-3xl font-serif text-text-primary mb-8">Your Cart</h1>
         
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">

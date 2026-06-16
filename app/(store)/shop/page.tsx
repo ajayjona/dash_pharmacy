@@ -27,7 +27,7 @@ export default function ShopPage() {
   const [isFetching, setIsFetching] = useState(true);
 
   useEffect(() => {
-    fetch('/api/products?limit=100')
+    fetch('/api/products?limit=100', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
