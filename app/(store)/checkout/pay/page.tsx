@@ -1,25 +1,36 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, CheckCircle2, Loader2 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { clearCart } from '@/store/slices/cartSlice';
 import { formatPrice } from '@/lib/formatters';
 import { Button } from '@/components/ui/Button';
 
-export default function PaymentPage() {
+function PaymentContent() {
   const dispatch = useAppDispatch();
-  const { total: subtotal } = useAppSelector(state => state.cart);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get('orderId');
   
   const [activeTab, setActiveTab] = useState<'mtn' | 'airtel' | 'card'>('mtn');
   const [phone, setPhone] = useState('');
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success'>('idle');
   const [countdown, setCountdown] = useState(60);
+  const [orderData, setOrderData] = useState<any>(null);
 
-  // Hardcoded for demo
-  const total = subtotal > 0 ? subtotal + 5000 : 87500;
+  useEffect(() => {
+    if (orderId) {
+      fetch(`/api/orders/${orderId}`)
+        .then(res => res.json())
+        .then(data => setOrderData(data))
+        .catch(console.error);
+    }
+  }, [orderId]);
+
+  const total = orderData?.total || 0;
+  const orderNumber = orderData?.orderNumber || 'PENDING';
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -31,15 +42,23 @@ export default function PaymentPage() {
     return () => clearInterval(timer);
   }, [paymentStatus, countdown]);
 
-  const handlePay = () => {
+  const handlePay = async () => {
     setPaymentStatus('processing');
     setCountdown(60);
+    
     // Simulate successful payment after 4 seconds
-    setTimeout(() => {
+    setTimeout(async () => {
+      if (orderId) {
+        await fetch(`/api/orders/${orderId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentStatus: 'paid' })
+        });
+      }
+      
       setPaymentStatus('success');
       setTimeout(() => {
-        dispatch(clearCart());
-        router.push('/orders/MR-2025-00431/confirm');
+        router.push(`/orders/${orderId}/confirm`);
       }, 2000);
     }, 4000);
   };
@@ -165,7 +184,7 @@ export default function PaymentPage() {
                   <div className="text-3xl font-mono font-bold text-text-primary mt-1">{formatPrice(total)}</div>
                 </div>
 
-                <Button size="lg" className="w-full" onClick={handlePay}>
+                <Button size="lg" className="w-full" onClick={handlePay} disabled={total === 0}>
                   {activeTab === 'card' ? `Pay ${formatPrice(total)}` : 'Pay now'}
                 </Button>
 
@@ -181,5 +200,13 @@ export default function PaymentPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <React.Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><Loader2 className="w-8 h-8 animate-spin text-primary-green" /></div>}>
+      <PaymentContent />
+    </React.Suspense>
   );
 }

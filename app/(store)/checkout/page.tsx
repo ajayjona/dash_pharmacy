@@ -3,25 +3,33 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Check, AlertTriangle, Truck, Zap, Upload } from 'lucide-react';
-import { useAppSelector } from '@/store/hooks';
+import { Check, AlertTriangle, Truck, Zap, Upload, Plus } from 'lucide-react';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { clearCart } from '@/store/slices/cartSlice';
 import { formatPrice } from '@/lib/formatters';
 import { Button } from '@/components/ui/Button';
+import toast from 'react-hot-toast';
 
 type Step = 1 | 2 | 3;
 
 export default function CheckoutPage() {
   const { items, total: subtotal } = useAppSelector(state => state.cart);
+  const { isAuthenticated, isLoading } = useAppSelector(state => state.auth);
+  const dispatch = useAppDispatch();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [addressData, setAddressData] = useState({
-    name: '',
     phone: '',
     street: '',
     district: 'Kampala Central',
     instructions: ''
   });
+
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
 
   const [deliveryOption, setDeliveryOption] = useState<'standard' | 'express'>('standard');
   const [timeSlot, setTimeSlot] = useState('9am–11am');
@@ -29,7 +37,7 @@ export default function CheckoutPage() {
   const requiresPrescription = items.some(item => item.product.requiresPrescription);
   const [prescriptionUploaded, setPrescriptionUploaded] = useState(false);
 
-  const discount = 0; // Keeping simple for checkout flow
+  const discount = 0; 
   const deliveryFee = deliveryOption === 'express' ? 15000 : (subtotal > 50000 ? 0 : 5000);
   const total = subtotal - discount + deliveryFee;
 
@@ -40,20 +48,68 @@ export default function CheckoutPage() {
   }, []);
 
   React.useEffect(() => {
-    if (isMounted && items.length === 0) {
-      router.push('/cart');
+    if (isMounted && !isLoading) {
+      if (!isAuthenticated) {
+        toast.error('Please sign in to continue with your order');
+        router.push('/auth/login?callbackUrl=/checkout');
+      } else if (items.length === 0) {
+        router.push('/cart');
+      } else {
+        // Fetch addresses
+        fetch('/api/addresses')
+          .then(res => res.json())
+          .then(data => {
+            if (!data.error && Array.isArray(data)) {
+              setSavedAddresses(data);
+              if (data.length > 0) {
+                setSelectedAddressId(data[0].id);
+              } else {
+                setShowNewAddressForm(true);
+              }
+            }
+          })
+          .catch(console.error);
+      }
     }
-  }, [isMounted, items, router]);
+  }, [isMounted, isAuthenticated, isLoading, items, router]);
 
-  if (!isMounted || items.length === 0) {
+  if (!isMounted || !isAuthenticated || items.length === 0) {
     return null;
   }
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < 3) setCurrentStep((prev) => (prev + 1) as Step);
     else {
-      // Place order and navigate to payment
-      router.push('/checkout/pay');
+      setIsSubmitting(true);
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items,
+            addressId: showNewAddressForm ? null : selectedAddressId,
+            addressData: showNewAddressForm ? addressData : null,
+            deliveryFee,
+            subtotal,
+            total,
+            deliveryOption
+          })
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to create order');
+        }
+
+        const order = await res.json();
+        dispatch(clearCart());
+        toast.success('Order placed successfully!');
+        router.push(`/checkout/pay?orderId=${order.id}`);
+      } catch (e) {
+        console.error(e);
+        toast.error('Failed to place order. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -107,39 +163,64 @@ export default function CheckoutPage() {
               <div className="bg-surface rounded-xl border border-border p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4">
                 <h2 className="text-2xl font-serif text-text-primary mb-6">Delivery address</h2>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary mb-1">Full name</label>
-                    <input type="text" className="w-full px-4 py-2 border border-border rounded-lg focus:ring-1 focus:ring-primary-green" 
-                           value={addressData.name} onChange={e => setAddressData({...addressData, name: e.target.value})} />
+                {savedAddresses.length > 0 && !showNewAddressForm && (
+                  <div className="mb-6 space-y-3">
+                    {savedAddresses.map(addr => (
+                      <label key={addr.id} className={`block relative p-4 border rounded-xl cursor-pointer transition-all ${selectedAddressId === addr.id ? 'border-primary-green bg-primary-light/30 ring-1 ring-primary-green' : 'border-border hover:border-primary-green/50'}`}>
+                        <div className="flex items-start gap-4">
+                          <input type="radio" name="savedAddress" checked={selectedAddressId === addr.id} onChange={() => setSelectedAddressId(addr.id)} className="mt-1 w-4 h-4 text-primary-green" />
+                          <div className="flex-1">
+                            <p className="font-medium text-text-primary">{addr.street}</p>
+                            <p className="text-sm text-text-secondary">{addr.district}</p>
+                            <p className="text-sm text-text-secondary">{addr.phone}</p>
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                    <Button variant="outline" className="w-full mt-2" onClick={() => setShowNewAddressForm(true)}>
+                      <Plus className="w-4 h-4 mr-2" /> Add a new address
+                    </Button>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary mb-1">Phone number</label>
-                    <input type="tel" placeholder="+256 7XX XXX XXX" className="w-full px-4 py-2 border border-border rounded-lg focus:ring-1 focus:ring-primary-green" 
-                           value={addressData.phone} onChange={e => setAddressData({...addressData, phone: e.target.value})}/>
+                )}
+
+                {showNewAddressForm && (
+                  <div className="mb-6">
+                    {savedAddresses.length > 0 && (
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-text-primary">New Address</h3>
+                        <button className="text-sm text-primary-green font-medium" onClick={() => setShowNewAddressForm(false)}>Cancel</button>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-text-primary mb-1">Phone number</label>
+                        <input type="tel" placeholder="+256 7XX XXX XXX" className="w-full px-4 py-2 border border-border rounded-lg focus:ring-1 focus:ring-primary-green" 
+                               value={addressData.phone} onChange={e => setAddressData({...addressData, phone: e.target.value})}/>
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-text-primary mb-1">Street address / Area</label>
+                        <input type="text" className="w-full px-4 py-2 border border-border rounded-lg focus:ring-1 focus:ring-primary-green" 
+                               value={addressData.street} onChange={e => setAddressData({...addressData, street: e.target.value})}/>
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-text-primary mb-1">District</label>
+                        <select className="w-full px-4 py-2 border border-border rounded-lg focus:ring-1 focus:ring-primary-green"
+                                value={addressData.district} onChange={e => setAddressData({...addressData, district: e.target.value})}>
+                          <option>Kampala Central</option>
+                          <option>Makindye</option>
+                          <option>Rubaga</option>
+                          <option>Kawempe</option>
+                          <option>Nakawa</option>
+                        </select>
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-text-primary mb-1">Delivery instructions (optional)</label>
+                        <textarea rows={3} placeholder="E.g. Blue gate, apartment 4B..." className="w-full px-4 py-2 border border-border rounded-lg focus:ring-1 focus:ring-primary-green resize-none"
+                                  value={addressData.instructions} onChange={e => setAddressData({...addressData, instructions: e.target.value})}></textarea>
+                      </div>
+                    </div>
                   </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-text-primary mb-1">Street address / Area</label>
-                    <input type="text" className="w-full px-4 py-2 border border-border rounded-lg focus:ring-1 focus:ring-primary-green" 
-                           value={addressData.street} onChange={e => setAddressData({...addressData, street: e.target.value})}/>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-text-primary mb-1">District</label>
-                    <select className="w-full px-4 py-2 border border-border rounded-lg focus:ring-1 focus:ring-primary-green"
-                            value={addressData.district} onChange={e => setAddressData({...addressData, district: e.target.value})}>
-                      <option>Kampala Central</option>
-                      <option>Makindye</option>
-                      <option>Rubaga</option>
-                      <option>Kawempe</option>
-                      <option>Nakawa</option>
-                    </select>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-text-primary mb-1">Delivery instructions (optional)</label>
-                    <textarea rows={3} placeholder="E.g. Blue gate, apartment 4B..." className="w-full px-4 py-2 border border-border rounded-lg focus:ring-1 focus:ring-primary-green resize-none"
-                              value={addressData.instructions} onChange={e => setAddressData({...addressData, instructions: e.target.value})}></textarea>
-                  </div>
-                </div>
+                )}
 
                 {requiresPrescription && (
                   <div className="mb-8 p-4 bg-[#FEF3E8] border border-[#F4A820]/30 rounded-xl">
@@ -234,10 +315,23 @@ export default function CheckoutPage() {
                       <button className="text-sm font-medium text-primary-green hover:underline" onClick={() => setCurrentStep(1)}>Edit</button>
                     </div>
                     <div className="text-sm text-text-secondary">
-                      <p className="font-medium text-text-primary">{addressData.name || 'John Doe'}</p>
-                      <p>{addressData.phone || '+256 700 000000'}</p>
-                      <p>{addressData.street || 'Plot 1, Example Street'}</p>
-                      <p>{addressData.district || 'Kampala'}</p>
+                      {showNewAddressForm ? (
+                        <>
+                          <p>{addressData.phone || '+256 700 000000'}</p>
+                          <p>{addressData.street || 'Plot 1, Example Street'}</p>
+                          <p>{addressData.district || 'Kampala'}</p>
+                        </>
+                      ) : (
+                        <>
+                          {savedAddresses.filter(a => a.id === selectedAddressId).map(addr => (
+                            <React.Fragment key={addr.id}>
+                              <p>{addr.street}</p>
+                              <p>{addr.district}</p>
+                              <p>{addr.phone}</p>
+                            </React.Fragment>
+                          ))}
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -274,8 +368,8 @@ export default function CheckoutPage() {
 
                 <div className="mt-8 pt-6 border-t border-border flex items-center gap-4">
                   <Button variant="ghost" onClick={() => setCurrentStep(2)}>Back</Button>
-                  <Button size="lg" className="flex-1" onClick={handleNext}>
-                    Place order
+                  <Button size="lg" className="flex-1" onClick={handleNext} disabled={isSubmitting}>
+                    {isSubmitting ? 'Processing...' : 'Place order'}
                   </Button>
                 </div>
               </div>

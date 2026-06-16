@@ -1,15 +1,43 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Package, Truck, Home, CheckCircle2 } from 'lucide-react';
+import { Package, Truck, Home, CheckCircle2, Download, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { formatPrice } from '@/lib/formatters';
 
 export default function OrderConfirmationPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: orderId } = React.use(params); // e.g. MR-2025-00431
+  const { id: orderId } = React.use(params);
+  const [order, setOrder] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/orders/${orderId}`)
+      .then(res => res.json())
+      .then(data => {
+        setOrder(data);
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setIsLoading(false);
+      });
+  }, [orderId]);
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading receipt...</div>;
+  }
+
+  if (!order) {
+    return <div className="min-h-screen flex items-center justify-center">Order not found.</div>;
+  }
 
   return (
-    <div className="bg-background min-h-screen pt-12 pb-24">
+    <div className="bg-background min-h-screen pt-12 pb-24 print:pt-0 print:pb-0 print:bg-white">
       <div className="max-w-3xl mx-auto px-4">
         
         {/* Above the fold */}
@@ -17,18 +45,18 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ id
           <div className="w-20 h-20 mx-auto bg-primary-light rounded-full flex items-center justify-center text-primary-green mb-6">
             <CheckCircle2 className="w-10 h-10 animate-[pulse_2s_ease-in-out_infinite]" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-serif text-text-primary mb-4">Order confirmed!</h1>
-          <div className="inline-block bg-surface border border-border px-4 py-2 rounded-lg font-mono font-bold text-lg text-primary-green mb-4 shadow-sm">
-            #{orderId}
+          <h1 className="text-4xl md:text-5xl font-serif text-text-primary mb-4 print:text-2xl">Order confirmed!</h1>
+          <div className="inline-block bg-surface border border-border px-4 py-2 rounded-lg font-mono font-bold text-lg text-primary-green mb-4 shadow-sm print:shadow-none print:border-none print:p-0">
+            #{order.orderNumber}
           </div>
-          <p className="text-text-secondary text-lg max-w-lg mx-auto">
+          <p className="text-text-secondary text-lg max-w-lg mx-auto print:hidden">
             Thank you. We&apos;ve received your order and it is being prepared for delivery.
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
-            <Link href={`/orders/${orderId}`}>
-              <Button size="lg" className="w-full sm:w-auto">Track your order</Button>
-            </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 print:hidden">
+            <Button size="lg" className="w-full sm:w-auto" onClick={handlePrint}>
+              <Download className="w-4 h-4 mr-2" /> Download Receipt
+            </Button>
             <Link href="/shop">
               <Button variant="outline" size="lg" className="w-full sm:w-auto">Continue shopping</Button>
             </Link>
@@ -36,7 +64,7 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ id
         </div>
 
         {/* Timeline Preview */}
-        <div className="bg-surface rounded-xl border border-border p-6 md:p-8 mb-8">
+        <div className="bg-surface rounded-xl border border-border p-6 md:p-8 mb-8 print:hidden">
           <h3 className="font-bold text-text-primary mb-6 text-center">What happens next?</h3>
           
           <div className="relative">
@@ -50,22 +78,22 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ id
                 <span className="text-xs font-bold text-primary-green text-center">Order<br/>confirmed</span>
               </div>
               <div className="flex flex-col items-center flex-1">
-                <div className="w-10 h-10 rounded-full bg-background border-2 border-border text-text-muted flex items-center justify-center mb-3 ring-4 ring-surface">
+                <div className={`w-10 h-10 rounded-full ${order.status !== 'pending' ? 'bg-primary-green text-surface' : 'bg-background border-2 border-border text-text-muted'} flex items-center justify-center mb-3 ring-4 ring-surface`}>
                   <Package className="w-5 h-5" />
                 </div>
-                <span className="text-xs font-medium text-text-muted text-center">Being<br/>packed</span>
+                <span className={`text-xs ${order.status !== 'pending' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Being<br/>packed</span>
               </div>
               <div className="flex flex-col items-center flex-1">
-                <div className="w-10 h-10 rounded-full bg-background border-2 border-border text-text-muted flex items-center justify-center mb-3 ring-4 ring-surface">
+                <div className={`w-10 h-10 rounded-full ${order.status === 'delivering' || order.status === 'completed' ? 'bg-primary-green text-surface' : 'bg-background border-2 border-border text-text-muted'} flex items-center justify-center mb-3 ring-4 ring-surface`}>
                   <Truck className="w-5 h-5" />
                 </div>
-                <span className="text-xs font-medium text-text-muted text-center">Out for<br/>delivery</span>
+                <span className={`text-xs ${order.status === 'delivering' || order.status === 'completed' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Out for<br/>delivery</span>
               </div>
               <div className="flex flex-col items-center flex-1">
-                <div className="w-10 h-10 rounded-full bg-background border-2 border-border text-text-muted flex items-center justify-center mb-3 ring-4 ring-surface">
+                <div className={`w-10 h-10 rounded-full ${order.status === 'completed' ? 'bg-primary-green text-surface' : 'bg-background border-2 border-border text-text-muted'} flex items-center justify-center mb-3 ring-4 ring-surface`}>
                   <Home className="w-5 h-5" />
                 </div>
-                <span className="text-xs font-medium text-text-muted text-center">Delivered</span>
+                <span className={`text-xs ${order.status === 'completed' ? 'font-bold text-primary-green' : 'font-medium text-text-muted'} text-center`}>Delivered</span>
               </div>
             </div>
           </div>
@@ -76,48 +104,56 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ id
         </div>
 
         {/* Order Details Card */}
-        <div className="bg-surface rounded-xl border border-border overflow-hidden">
-          <div className="p-4 md:p-6 border-b border-border bg-background/50">
+        <div className="bg-surface rounded-xl border border-border overflow-hidden print:border-none print:shadow-none">
+          <div className="p-4 md:p-6 border-b border-border bg-background/50 print:bg-transparent print:px-0">
             <h2 className="text-lg font-bold text-text-primary">Order details</h2>
           </div>
           
-          <div className="p-4 md:p-6 divide-y divide-border">
+          <div className="p-4 md:p-6 divide-y divide-border print:px-0">
             <div className="pb-4 mb-4">
               <div className="text-sm text-text-secondary mb-2">Items</div>
               <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="font-medium text-text-primary">2x Paracetamol 500mg</span>
-                  <span className="font-mono">UGX 5,000</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="font-medium text-text-primary">1x Vitamin C 1000mg</span>
-                  <span className="font-mono">UGX 18,000</span>
-                </div>
+                {order.items.map((item: any) => (
+                  <div key={item.id} className="flex justify-between text-sm">
+                    <span className="font-medium text-text-primary">{item.quantity}x {item.name}</span>
+                    <span className="font-mono">{formatPrice(item.price * item.quantity)}</span>
+                  </div>
+                ))}
               </div>
             </div>
             
             <div className="py-4 mb-4 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <div className="text-sm text-text-secondary mb-1">Delivery address</div>
-                <p className="text-sm font-medium text-text-primary">Sarah Namukasa</p>
-                <p className="text-sm text-text-primary">Plot 12, Kololo</p>
-                <p className="text-sm text-text-primary">Kampala Central</p>
-                <p className="text-sm text-text-primary">+256 772 123 456</p>
+                <p className="text-sm font-medium text-text-primary">{order.deliveryAddress?.name}</p>
+                <p className="text-sm text-text-primary">{order.deliveryAddress?.street}</p>
+                <p className="text-sm text-text-primary">{order.deliveryAddress?.district}</p>
+                <p className="text-sm text-text-primary">{order.deliveryAddress?.phone}</p>
               </div>
               <div>
-                <div className="text-sm text-text-secondary mb-1">Estimated delivery time</div>
-                <p className="text-sm font-medium text-text-primary">Today, 2:00 PM - 4:00 PM</p>
+                <div className="text-sm text-text-secondary mb-1">Date</div>
+                <p className="text-sm font-medium text-text-primary">
+                  {new Date(order.createdAt).toLocaleDateString()} {new Date(order.createdAt).toLocaleTimeString()}
+                </p>
               </div>
             </div>
             
             <div className="pt-4">
               <div className="flex justify-between items-center text-sm mb-2">
-                <span className="text-text-secondary">Payment method</span>
-                <span className="font-medium">MTN MoMo</span>
+                <span className="text-text-secondary">Subtotal</span>
+                <span className="font-medium">{formatPrice(order.subtotal)}</span>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center text-sm mb-2">
+                <span className="text-text-secondary">Delivery</span>
+                <span className="font-medium">{formatPrice(order.deliveryFee)}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm mb-4">
+                <span className="text-text-secondary">Payment status</span>
+                <span className="font-medium uppercase text-primary-green">{order.paymentStatus}</span>
+              </div>
+              <div className="flex justify-between items-center border-t border-border pt-4">
                 <span className="font-bold text-text-primary">Total paid</span>
-                <span className="font-mono font-bold text-primary-green text-lg">UGX 28,000</span>
+                <span className="font-mono font-bold text-primary-green text-lg">{formatPrice(order.total)}</span>
               </div>
             </div>
           </div>
