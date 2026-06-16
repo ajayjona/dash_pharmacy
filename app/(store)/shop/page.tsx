@@ -319,7 +319,7 @@ export default function ShopPage() {
               )}
             </div>
 
-            {filteredProducts.length === 0 ? (
+            {filteredProducts.length === 0 && !isFetching ? (
               <div className="text-center py-20 bg-surface rounded-xl border border-border">
                 <h3 className="text-lg font-medium text-text-primary mb-2">No products found</h3>
                 <p className="text-text-muted mb-4">Try adjusting your filters or search query.</p>
@@ -332,6 +332,10 @@ export default function ShopPage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                   {isFetching ? (
                     <>
+                      <SkeletonCard />
+                      <SkeletonCard />
+                      <SkeletonCard />
+                      <SkeletonCard />
                       <SkeletonCard />
                       <SkeletonCard />
                       <SkeletonCard />
