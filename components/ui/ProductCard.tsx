@@ -3,9 +3,9 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
-import { useAppDispatch } from '@/store/hooks';
-import { addItem } from '@/store/slices/cartSlice';
+import { Plus, Minus, Check } from 'lucide-react';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { addItem, updateQuantity } from '@/store/slices/cartSlice';
 import { Product } from '@/types';
 import { formatPrice } from '@/lib/formatters';
 import { Button } from './Button';
@@ -16,6 +16,7 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const dispatch = useAppDispatch();
+  const cartItem = useAppSelector(state => state.cart.items.find(item => item.product.id === product.id));
   const { name, price, originalPrice, image, category, inStock, requiresPrescription, slug } = product;
 
   return (
@@ -69,27 +70,44 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         </div>
 
-        <Button
-          variant={inStock ? (requiresPrescription ? 'outline' : 'primary') : 'ghost'}
-          disabled={!inStock}
-          className="w-full text-xs sm:text-sm py-2 sm:py-2.5 h-auto"
-          onClick={() => {
-            if (requiresPrescription) {
-              window.location.href = `/shop/${slug}`;
-            } else {
-              dispatch(addItem(product));
-            }
-          }}
-        >
-          {requiresPrescription ? (
-            'View details'
-          ) : (
-            <>
-              <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 shrink-0" />
-              Add to cart
-            </>
-          )}
-        </Button>
+        {requiresPrescription ? (
+          <Button
+            variant="outline"
+            disabled={!inStock}
+            className="w-full text-xs sm:text-sm py-2 sm:py-2.5 h-auto"
+            onClick={() => window.location.href = `/shop/${slug}`}
+          >
+            View details
+          </Button>
+        ) : cartItem ? (
+          <div className="flex items-center justify-between border-2 border-primary-green rounded-lg text-primary-green overflow-hidden">
+            <button 
+              className="px-3 sm:px-4 py-2 sm:py-2.5 hover:bg-primary-green/10 transition-colors"
+              onClick={() => dispatch(updateQuantity({ id: product.id, quantity: cartItem.quantity - 1 }))}
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <span className="font-mono font-bold text-sm sm:text-base">
+              {cartItem.quantity}
+            </span>
+            <button 
+              className="px-3 sm:px-4 py-2 sm:py-2.5 hover:bg-primary-green/10 transition-colors"
+              onClick={() => dispatch(updateQuantity({ id: product.id, quantity: cartItem.quantity + 1 }))}
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <Button
+            variant={inStock ? 'primary' : 'ghost'}
+            disabled={!inStock}
+            className="w-full text-xs sm:text-sm py-2 sm:py-2.5 h-auto"
+            onClick={() => dispatch(addItem(product))}
+          >
+            <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 shrink-0" />
+            Add to cart
+          </Button>
+        )}
       </div>
     </div>
   );
