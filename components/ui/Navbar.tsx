@@ -115,7 +115,7 @@ export const Navbar: React.FC = () => {
                       </Link>
                     )}
                     <Link 
-                      href="/orders" 
+                      href="/cart" 
                       onClick={() => setIsDropdownOpen(false)}
                       className="flex items-center gap-2 px-4 py-2.5 text-sm text-text-secondary hover:bg-background hover:text-primary-green transition-colors"
                     >
@@ -182,6 +182,9 @@ export const Navbar: React.FC = () => {
             </div>
             <nav className="flex-1 px-4 py-6 space-y-4">
               <Link href="/shop" className="block text-lg font-medium text-text-primary hover:text-primary-green" onClick={() => setIsMobileMenuOpen(false)}>Shop</Link>
+              {isLoggedIn && (
+                <Link href="/cart" className="block text-lg font-medium text-text-primary hover:text-primary-green" onClick={() => setIsMobileMenuOpen(false)}>My Orders</Link>
+              )}
               <Link href="/about" className="block text-lg font-medium text-text-primary hover:text-primary-green" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
               <Link href="/contact" className="block text-lg font-medium text-text-primary hover:text-primary-green" onClick={() => setIsMobileMenuOpen(false)}>Contact</Link>
             </nav>
@@ -200,12 +203,7 @@ export const Navbar: React.FC = () => {
                       </Button>
                     </Link>
                   )}
-                  <Link href="/orders" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button className="w-full justify-start gap-2" variant="outline">
-                      <UserIcon className="w-4 h-4" />
-                      My Orders
-                    </Button>
-                  </Link>
+
                   <Button 
                     className="w-full justify-start gap-2 text-danger border-danger/20 hover:bg-danger/5" 
                     variant="outline"
