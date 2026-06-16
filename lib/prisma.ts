@@ -1,4 +1,8 @@
 import { PrismaClient } from '@prisma/client'
+import dns from 'node:dns'
+
+// Force Node.js to use IPv4 first to prevent Neon database connection timeouts
+dns.setDefaultResultOrder('ipv4first')
 
 const prismaClientSingleton = () => {
   return new PrismaClient()
