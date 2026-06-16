@@ -10,8 +10,8 @@ import { formatPrice } from '@/lib/formatters';
 import { Button } from '@/components/ui/Button';
 import { ProductCard } from '@/components/ui/ProductCard';
 
-export default function ProductDetailPage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+export default function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = React.use(params);
   
   const dispatch = useAppDispatch();
   const [qty, setQty] = useState(1);

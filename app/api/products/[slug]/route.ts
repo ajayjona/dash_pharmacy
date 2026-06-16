@@ -3,8 +3,9 @@ import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
-export async function GET(request: Request, { params }: { params: { slug: string } }) {
+export async function GET(request: Request, props: { params: Promise<{ slug: string }> }) {
   try {
+    const params = await props.params;
     const product = await prisma.product.findUnique({
       where: { slug: params.slug },
     });
@@ -25,8 +26,9 @@ export async function GET(request: Request, { params }: { params: { slug: string
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: { slug: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ slug: string }> }) {
   try {
+    const params = await props.params;
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -62,8 +64,9 @@ export async function PATCH(request: Request, { params }: { params: { slug: stri
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { slug: string } }) {
+export async function DELETE(request: Request, props: { params: Promise<{ slug: string }> }) {
   try {
+    const params = await props.params;
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

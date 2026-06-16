@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { Package, Truck, Home, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
-export default function OrderConfirmationPage({ params }: { params: { id: string } }) {
-  const orderId = params.id; // e.g. MR-2025-00431
+export default function OrderConfirmationPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: orderId } = React.use(params); // e.g. MR-2025-00431
 
   return (
     <div className="bg-background min-h-screen pt-12 pb-24">

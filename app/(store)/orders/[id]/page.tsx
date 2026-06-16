@@ -4,8 +4,8 @@ import React from 'react';
 import { Truck, Home, CheckCircle2, Phone, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
-export default function OrderTrackingPage({ params }: { params: { id: string } }) {
-  const orderId = params.id; // e.g. MR-2025-00431
+export default function OrderTrackingPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: orderId } = React.use(params); // e.g. MR-2025-00431
 
   // Status can be 'confirmed', 'packing', 'dispatched', 'delivered'
   const currentStatus = 'dispatched' as string; 
