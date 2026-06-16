@@ -32,8 +32,21 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ id
     return <div className="min-h-screen flex items-center justify-center">Loading receipt...</div>;
   }
 
-  if (!order) {
-    return <div className="min-h-screen flex items-center justify-center">Order not found.</div>;
+  if (!order || order.error || !Array.isArray(order.items)) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center text-center px-4">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-500 mb-4">
+          <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-serif text-text-primary mb-2">Order Not Found</h2>
+        <p className="text-text-secondary mb-6">{order?.error || "We couldn't retrieve your receipt details."}</p>
+        <Link href="/shop">
+          <Button>Return to Shop</Button>
+        </Link>
+      </div>
+    );
   }
 
   return (

@@ -30,6 +30,9 @@ export default function CheckoutPage() {
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+  const [isFetchingAddresses, setIsFetchingAddresses] = useState(true);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const [isUpdatingAddress, setIsUpdatingAddress] = useState(false);
 
   const [deliveryOption, setDeliveryOption] = useState<'standard' | 'express'>('standard');
   const [timeSlot, setTimeSlot] = useState('9am–11am');
@@ -67,8 +70,12 @@ export default function CheckoutPage() {
                 setShowNewAddressForm(true);
               }
             }
+            setIsFetchingAddresses(false);
           })
-          .catch(console.error);
+          .catch(err => {
+            console.error(err);
+            setIsFetchingAddresses(false);
+          });
       }
     }
   }, [isMounted, isAuthenticated, isLoading, items, router]);
@@ -76,6 +83,57 @@ export default function CheckoutPage() {
   if (!isMounted || !isAuthenticated || items.length === 0) {
     return null;
   }
+
+  const handleEditAddress = (addr: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setAddressData({
+      phone: addr.phone,
+      street: addr.street,
+      district: addr.district,
+      instructions: addr.instructions || ''
+    });
+    setEditingAddressId(addr.id);
+    setShowNewAddressForm(true);
+  };
+
+  const handleDeleteAddress = async (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm('Are you sure you want to delete this address?')) return;
+    try {
+      await fetch(`/api/addresses/${id}`, { method: 'DELETE' });
+      setSavedAddresses(prev => prev.filter(a => a.id !== id));
+      if (selectedAddressId === id) setSelectedAddressId(null);
+      toast.success('Address deleted');
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to delete address');
+    }
+  };
+
+  const handleUpdateAddress = async () => {
+    if (!editingAddressId) return;
+    setIsUpdatingAddress(true);
+    try {
+      const res = await fetch(`/api/addresses/${editingAddressId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(addressData)
+      });
+      const updated = await res.json();
+      setSavedAddresses(prev => prev.map(a => a.id === editingAddressId ? updated : a));
+      setEditingAddressId(null);
+      setShowNewAddressForm(false);
+      setSelectedAddressId(updated.id);
+      toast.success('Address updated');
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to update address');
+    } finally {
+      setIsUpdatingAddress(false);
+    }
+  };
 
   const handleNext = async () => {
     if (currentStep < 3) setCurrentStep((prev) => (prev + 1) as Step);
@@ -162,32 +220,45 @@ export default function CheckoutPage() {
               <div className="bg-surface rounded-xl border border-border p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4">
                 <h2 className="text-2xl font-serif text-text-primary mb-6">Delivery address</h2>
                 
-                {savedAddresses.length > 0 && !showNewAddressForm && (
-                  <div className="mb-6 space-y-3">
-                    {savedAddresses.map(addr => (
-                      <label key={addr.id} className={`block relative p-4 border rounded-xl cursor-pointer transition-all ${selectedAddressId === addr.id ? 'border-primary-green bg-primary-light/30 ring-1 ring-primary-green' : 'border-border hover:border-primary-green/50'}`}>
-                        <div className="flex items-start gap-4">
-                          <input type="radio" name="savedAddress" checked={selectedAddressId === addr.id} onChange={() => setSelectedAddressId(addr.id)} className="mt-1 w-4 h-4 text-primary-green" />
-                          <div className="flex-1">
-                            <p className="font-medium text-text-primary">{addr.street}</p>
-                            <p className="text-sm text-text-secondary">{addr.district}</p>
-                            <p className="text-sm text-text-secondary">{addr.phone}</p>
-                          </div>
-                        </div>
-                      </label>
-                    ))}
-                    <Button variant="outline" className="w-full mt-2" onClick={() => setShowNewAddressForm(true)}>
-                      <Plus className="w-4 h-4 mr-2" /> Add a new address
-                    </Button>
+                {isFetchingAddresses ? (
+                  <div className="space-y-3 mb-6">
+                    <div className="h-[88px] bg-border/40 rounded-xl animate-pulse"></div>
+                    <div className="h-[88px] bg-border/40 rounded-xl animate-pulse"></div>
                   </div>
+                ) : (
+                  <>
+                    {savedAddresses.length > 0 && !showNewAddressForm && (
+                      <div className="mb-6 space-y-3">
+                        {savedAddresses.map(addr => (
+                          <label key={addr.id} className={`block relative p-4 border rounded-xl cursor-pointer transition-all ${selectedAddressId === addr.id ? 'border-primary-green bg-primary-light/30 ring-1 ring-primary-green' : 'border-border hover:border-primary-green/50'}`}>
+                            <div className="flex items-start gap-4">
+                              <input type="radio" name="savedAddress" checked={selectedAddressId === addr.id} onChange={() => setSelectedAddressId(addr.id)} className="mt-1 w-4 h-4 text-primary-green" />
+                              <div className="flex-1">
+                                <p className="font-medium text-text-primary">{addr.street}</p>
+                                <p className="text-sm text-text-secondary">{addr.district}</p>
+                                <p className="text-sm text-text-secondary">{addr.phone}</p>
+                              </div>
+                              <div className="flex flex-col gap-2 items-end z-10 relative">
+                                <button type="button" onClick={(e) => handleEditAddress(addr, e)} className="text-xs font-bold text-primary-green hover:underline">Edit</button>
+                                <button type="button" onClick={(e) => handleDeleteAddress(addr.id, e)} className="text-xs font-bold text-danger hover:underline">Delete</button>
+                              </div>
+                            </div>
+                          </label>
+                        ))}
+                        <Button variant="outline" className="w-full mt-2" onClick={() => setShowNewAddressForm(true)}>
+                          <Plus className="w-4 h-4 mr-2" /> Add a new address
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {showNewAddressForm && (
                   <div className="mb-6">
                     {savedAddresses.length > 0 && (
                       <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-bold text-text-primary">New Address</h3>
-                        <button className="text-sm text-primary-green font-medium" onClick={() => setShowNewAddressForm(false)}>Cancel</button>
+                        <h3 className="font-bold text-text-primary">{editingAddressId ? 'Update Address' : 'New Address'}</h3>
+                        <button className="text-sm text-primary-green font-medium" onClick={() => { setShowNewAddressForm(false); setEditingAddressId(null); setAddressData({ phone: '', street: '', district: 'Kampala Central', instructions: '' }); }}>Cancel</button>
                       </div>
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -217,6 +288,14 @@ export default function CheckoutPage() {
                         <textarea rows={3} placeholder="E.g. Blue gate, apartment 4B..." className="w-full px-4 py-2 border border-border rounded-lg focus:ring-1 focus:ring-primary-green resize-none"
                                   value={addressData.instructions} onChange={e => setAddressData({...addressData, instructions: e.target.value})}></textarea>
                       </div>
+                      
+                      {editingAddressId && (
+                        <div className="md:col-span-2 flex justify-end mt-2">
+                          <Button type="button" onClick={handleUpdateAddress} disabled={isUpdatingAddress}>
+                            {isUpdatingAddress ? 'Saving...' : 'Save Changes'}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
