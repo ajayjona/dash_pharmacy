@@ -1,10 +1,58 @@
 'use client';
 
-import React from 'react';
-import { MapPin, Phone, Mail, Clock, Send, ShieldCheck, HeartPulse } from 'lucide-react';
+import React, { useState } from 'react';
+import { MapPin, Phone, Mail, Clock, Send, ShieldCheck, HeartPulse, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 export default function ContactPage() {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.message) {
+      setError('Please fill out all required fields.');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      setIsSuccess(true);
+      setFormData({ firstName: '', lastName: '', email: '', subject: '', message: '' });
+      
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => setIsSuccess(false), 5000);
+    } catch (err) {
+      setError('An error occurred while sending your message. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="bg-background min-h-screen">
       {/* Hero Section */}
@@ -39,8 +87,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-bold text-text-primary mb-1">Our Location</h3>
                   <p className="text-text-secondary text-sm">
-                    Plot 45, Kampala Road<br />
-                    Opposite City Square<br />
+                    Bukoto-Kisaasi Road<br />
                     Kampala, Uganda
                   </p>
                 </div>
@@ -68,8 +115,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-bold text-text-primary mb-1">Email Us</h3>
                   <p className="text-text-secondary text-sm break-all">
-                    support@dashpharmacy.com<br />
-                    info@dashpharmacy.com
+                    dashcarephampahm@gmail.com
                   </p>
                 </div>
               </div>
@@ -107,69 +153,113 @@ export default function ContactPage() {
               <h2 className="text-2xl font-serif text-text-primary">Send us a Message</h2>
             </div>
             
-            <form className="flex flex-col gap-6" onSubmit={(e) => e.preventDefault()}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {isSuccess ? (
+              <div className="flex flex-col items-center justify-center text-center py-12 px-4 bg-primary-green/5 rounded-2xl border border-primary-green/20 animate-in fade-in zoom-in duration-300">
+                <div className="w-16 h-16 bg-primary-green text-surface rounded-full flex items-center justify-center mb-6">
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-serif text-text-primary mb-2">Message Sent!</h3>
+                <p className="text-text-secondary max-w-md">
+                  Thank you for reaching out. Our support team will get back to you as soon as possible.
+                </p>
+                <Button variant="outline" className="mt-8" onClick={() => setIsSuccess(false)}>
+                  Send another message
+                </Button>
+              </div>
+            ) : (
+              <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+                {error && (
+                  <div className="bg-danger/10 text-danger border border-danger/20 px-4 py-3 rounded-xl text-sm">
+                    {error}
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="firstName" className="text-sm font-medium text-text-primary">First Name *</label>
+                    <input 
+                      type="text" 
+                      id="firstName" 
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary-green/50 focus:border-primary-green transition-all" 
+                      placeholder="John"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="lastName" className="text-sm font-medium text-text-primary">Last Name *</label>
+                    <input 
+                      type="text" 
+                      id="lastName" 
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary-green/50 focus:border-primary-green transition-all" 
+                      placeholder="Doe"
+                    />
+                  </div>
+                </div>
+
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="firstName" className="text-sm font-medium text-text-primary">First Name</label>
+                  <label htmlFor="email" className="text-sm font-medium text-text-primary">Email Address *</label>
                   <input 
-                    type="text" 
-                    id="firstName" 
+                    type="email" 
+                    id="email" 
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
                     className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary-green/50 focus:border-primary-green transition-all" 
-                    placeholder="John"
+                    placeholder="john@example.com"
                   />
                 </div>
+
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="lastName" className="text-sm font-medium text-text-primary">Last Name</label>
-                  <input 
-                    type="text" 
-                    id="lastName" 
-                    className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary-green/50 focus:border-primary-green transition-all" 
-                    placeholder="Doe"
-                  />
+                  <label htmlFor="subject" className="text-sm font-medium text-text-primary">Subject</label>
+                  <select 
+                    id="subject" 
+                    value={formData.subject}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary-green/50 focus:border-primary-green transition-all appearance-none"
+                  >
+                    <option value="">Select a topic</option>
+                    <option value="general">General Inquiry</option>
+                    <option value="prescription">Prescription Refill</option>
+                    <option value="order">Order Status</option>
+                    <option value="pharmacist">Speak to a Pharmacist</option>
+                  </select>
                 </div>
-              </div>
 
-              <div className="flex flex-col gap-2">
-                <label htmlFor="email" className="text-sm font-medium text-text-primary">Email Address</label>
-                <input 
-                  type="email" 
-                  id="email" 
-                  className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary-green/50 focus:border-primary-green transition-all" 
-                  placeholder="john@example.com"
-                />
-              </div>
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="message" className="text-sm font-medium text-text-primary">Message *</label>
+                  <textarea 
+                    id="message" 
+                    rows={5}
+                    value={formData.message}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary-green/50 focus:border-primary-green transition-all resize-none" 
+                    placeholder="How can we help you today?"
+                  ></textarea>
+                </div>
 
-              <div className="flex flex-col gap-2">
-                <label htmlFor="subject" className="text-sm font-medium text-text-primary">Subject</label>
-                <select 
-                  id="subject" 
-                  className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary-green/50 focus:border-primary-green transition-all appearance-none"
-                >
-                  <option value="">Select a topic</option>
-                  <option value="general">General Inquiry</option>
-                  <option value="prescription">Prescription Refill</option>
-                  <option value="order">Order Status</option>
-                  <option value="pharmacist">Speak to a Pharmacist</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label htmlFor="message" className="text-sm font-medium text-text-primary">Message</label>
-                <textarea 
-                  id="message" 
-                  rows={5}
-                  className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary-green/50 focus:border-primary-green transition-all resize-none" 
-                  placeholder="How can we help you today?"
-                ></textarea>
-              </div>
-
-              <Button size="lg" className="w-full mt-2 group relative overflow-hidden" type="button">
-                <span className="flex items-center justify-center gap-2 relative z-10">
-                  Send Message
-                  <Send className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </span>
-              </Button>
-            </form>
+                <Button size="lg" className="w-full mt-2 group relative overflow-hidden" type="submit" disabled={isSubmitting}>
+                  <span className="flex items-center justify-center gap-2 relative z-10">
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        Send Message
+                        <Send className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                      </>
+                    )}
+                  </span>
+                </Button>
+              </form>
+            )}
           </div>
 
         </div>
