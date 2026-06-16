@@ -56,7 +56,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <span className="font-mono font-bold text-primary-green text-base sm:text-lg">
               {formatPrice(price)}
             </span>
-            {originalPrice && (
+            {originalPrice && originalPrice > price && (
               <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5">
                 <span className="text-[10px] sm:text-xs text-text-muted line-through">
                   {formatPrice(originalPrice)}

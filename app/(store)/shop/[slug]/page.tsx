@@ -88,7 +88,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
               <span className="text-3xl font-mono font-bold text-primary-green">
                 {formatPrice(product.price)}
               </span>
-              {product.originalPrice && (
+              {product.originalPrice && product.originalPrice > product.price && (
                 <>
                   <span className="text-lg font-mono text-text-muted line-through">
                     {formatPrice(product.originalPrice)}
