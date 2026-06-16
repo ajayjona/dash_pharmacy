@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { LayoutDashboard, ShoppingBag, Package, Users, BarChart2, Settings, UserPlus } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Package, Users, BarChart2, Settings, UserPlus, Store } from 'lucide-react';
 import LogoutButton from '@/components/admin/LogoutButton';
 import ActiveLink from '@/components/admin/ActiveLink';
 import { getServerSession } from 'next-auth';
@@ -53,11 +53,11 @@ export default async function AdminLayout({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 flex md:flex-col items-center md:items-stretch justify-around md:justify-start p-2 md:p-4 gap-1 md:gap-2">
+        <nav className="flex-1 flex md:flex-col items-center md:items-stretch justify-around md:justify-start p-2 md:p-4 gap-1 md:gap-2 overflow-x-auto">
           <ActiveLink 
             href="/admin" 
             exact={true}
-            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg transition-colors"
+            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg transition-colors min-w-[70px] md:min-w-0"
             inactiveClassName="text-white/70 hover:bg-white/10 hover:text-white font-medium"
             activeClassName="bg-primary-green text-white font-bold shadow-md border border-white/20"
           >
@@ -66,7 +66,7 @@ export default async function AdminLayout({
           </ActiveLink>
           <ActiveLink 
             href="/admin/orders" 
-            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg transition-colors"
+            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg transition-colors min-w-[70px] md:min-w-0"
             inactiveClassName="text-white/70 hover:bg-white/10 hover:text-white font-medium"
             activeClassName="bg-primary-green text-white font-bold shadow-md border border-white/20"
           >
@@ -75,7 +75,7 @@ export default async function AdminLayout({
           </ActiveLink>
           <ActiveLink 
             href="/admin/products" 
-            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg transition-colors"
+            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg transition-colors min-w-[70px] md:min-w-0"
             inactiveClassName="text-white/70 hover:bg-white/10 hover:text-white font-medium"
             activeClassName="bg-primary-green text-white font-bold shadow-md border border-white/20"
           >
@@ -84,7 +84,7 @@ export default async function AdminLayout({
           </ActiveLink>
           <ActiveLink 
             href="/admin/customers" 
-            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg transition-colors"
+            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg transition-colors min-w-[70px] md:min-w-0"
             inactiveClassName="text-white/70 hover:bg-white/10 hover:text-white font-medium"
             activeClassName="bg-primary-green text-white font-bold shadow-md border border-white/20"
           >
@@ -93,17 +93,26 @@ export default async function AdminLayout({
           </ActiveLink>
           <ActiveLink 
             href="/admin/invitations" 
-            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg transition-colors"
+            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg transition-colors min-w-[70px] md:min-w-0"
             inactiveClassName="text-white/70 hover:bg-white/10 hover:text-white font-medium"
             activeClassName="bg-primary-green text-white font-bold shadow-md border border-white/20"
           >
             <UserPlus className="w-5 h-5 md:w-5 md:h-5" />
             <span className="text-[10px] md:text-sm">Team</span>
           </ActiveLink>
+          
           <div className="hidden md:flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg text-white/40 cursor-not-allowed">
             <BarChart2 className="w-5 h-5 md:w-5 md:h-5" />
             <span className="text-[10px] md:text-sm font-medium">Reports</span>
           </div>
+
+          <Link 
+            href="/shop" 
+            className="md:hidden flex flex-col md:flex-row items-center gap-1 md:gap-3 p-3 rounded-lg transition-colors min-w-[70px] md:min-w-0 text-white/70 hover:bg-white/10 hover:text-white font-medium"
+          >
+            <Store className="w-5 h-5 md:w-5 md:h-5" />
+            <span className="text-[10px] md:text-sm">Storefront</span>
+          </Link>
         </nav>
 
         {/* Profile / Logout */}
@@ -120,6 +129,13 @@ export default async function AdminLayout({
             </div>
           </div>
           <div className="w-full space-y-1">
+            <Link 
+              href="/shop" 
+              className="flex items-center justify-center gap-2 text-sm rounded-lg transition-colors w-full p-2.5 text-white/80 hover:bg-white/10 hover:text-white font-medium mb-2 border border-white/10"
+            >
+              <Store className="w-4 h-4" />
+              Go to Storefront
+            </Link>
             <ActiveLink 
               href="/admin/settings" 
               className="flex items-center justify-center gap-2 text-sm rounded-lg transition-colors w-full p-2.5"
@@ -142,9 +158,12 @@ export default async function AdminLayout({
         <div className="md:hidden bg-surface border-b border-border p-4 flex justify-between items-center sticky top-0 z-40">
           <Link href="/admin" className="flex items-center gap-2">
             <img src="/dash_pharmacy_logo.png" alt="Dash Pharmacy Logo" className="h-16 w-auto object-contain" />
-            <span className="ml-1 text-[10px] uppercase text-text-muted">Admin</span>
+            <span className="ml-1 text-[10px] uppercase text-text-muted font-bold">Admin</span>
           </Link>
           <div className="flex items-center gap-3">
+            <Link href="/shop" className="text-primary-green hover:text-[#0F3D29] bg-primary-light p-2 rounded-full transition-colors mr-1">
+              <Store className="w-5 h-5" />
+            </Link>
             <div className="flex flex-col items-end">
               <span className="text-sm font-bold text-text-primary leading-tight">{formattedName}</span>
               <span className="text-[10px] text-text-secondary">{formattedTitle}</span>
