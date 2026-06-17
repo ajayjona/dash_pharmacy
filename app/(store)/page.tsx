@@ -76,7 +76,7 @@ export default async function HomePage() {
                 <Link href="/shop">
                   <Button size="lg" className="w-full sm:w-auto">Shop now</Button>
                 </Link>
-                <Link href="/auth/login">
+                <Link href="/upload-prescription">
                   <Button size="lg" variant="outline" className="w-full sm:w-auto">
                     <Upload className="w-5 h-5 mr-2" />
                     Upload prescription

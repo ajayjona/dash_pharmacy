@@ -69,13 +69,14 @@ model Order {
   discount          Float       @default(0)
   total             Float
   status            String      @default("pending")
-  deliveryAddressId String
-  paymentMethod     String
+  deliveryAddressId String?
+  paymentMethod     String      @default("pending") // Adjusting since a standalone prescription might not have this right away
   paymentStatus     String      @default("pending")
+  prescriptionImage String?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
   customer          Customer    @relation(fields: [customerId], references: [id])
-  deliveryAddress   Address     @relation(fields: [deliveryAddressId], references: [id])
+  deliveryAddress   Address?    @relation(fields: [deliveryAddressId], references: [id])
   items             OrderItem[]
 }
 

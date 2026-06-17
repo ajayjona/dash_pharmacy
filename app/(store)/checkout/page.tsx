@@ -8,6 +8,7 @@ import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { clearCart } from '@/store/slices/cartSlice';
 import { formatPrice } from '@/lib/formatters';
 import { Button } from '@/components/ui/Button';
+import { ImageUploader } from '@/components/ui/ImageUploader';
 import toast from 'react-hot-toast';
 
 type Step = 1 | 2 | 3;
@@ -38,7 +39,7 @@ export default function CheckoutPage() {
   const [timeSlot, setTimeSlot] = useState('9am–11am');
 
   const requiresPrescription = items.some(item => item.product.requiresPrescription);
-  const [prescriptionUploaded, setPrescriptionUploaded] = useState(false);
+  const [prescriptionImage, setPrescriptionImage] = useState<string>('');
 
   const discount = 0; 
   const deliveryFee = deliveryOption === 'express' ? 15000 : (subtotal > 50000 ? 0 : 5000);
@@ -136,6 +137,11 @@ export default function CheckoutPage() {
   };
 
   const handleNext = async () => {
+    if (currentStep === 1 && requiresPrescription && !prescriptionImage) {
+      toast.error('Please upload your prescription to continue');
+      return;
+    }
+    
     if (currentStep < 3) setCurrentStep((prev) => (prev + 1) as Step);
     else {
       setIsSubmitting(true);
@@ -150,7 +156,8 @@ export default function CheckoutPage() {
             deliveryFee,
             subtotal,
             total,
-            deliveryOption
+            deliveryOption,
+            prescriptionImage
           })
         });
 
@@ -304,12 +311,12 @@ export default function CheckoutPage() {
                   <div className="mb-8 p-4 bg-[#FEF3E8] border border-[#F4A820]/30 rounded-xl">
                     <div className="flex gap-3">
                       <AlertTriangle className="w-5 h-5 text-[#B36B00] shrink-0 mt-0.5" />
-                      <div>
+                      <div className="flex-1">
                         <h4 className="font-bold text-[#B36B00] mb-1">Prescription Required</h4>
                         <p className="text-sm text-[#B36B00] mb-3">One or more items in your cart require a prescription. Please upload it before completing your order.</p>
-                        <Button variant={prescriptionUploaded ? "outline" : "primary"} size="sm" onClick={() => setPrescriptionUploaded(true)}>
-                          {prescriptionUploaded ? <><Check className="w-4 h-4 mr-2"/> Uploaded</> : <><Upload className="w-4 h-4 mr-2"/> Upload prescription</>}
-                        </Button>
+                        <div className="bg-surface rounded-xl p-2 max-w-sm">
+                          <ImageUploader value={prescriptionImage} onChange={setPrescriptionImage} />
+                        </div>
                       </div>
                     </div>
                   </div>

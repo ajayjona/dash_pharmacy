@@ -39,10 +39,10 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { items, addressData, addressId, deliveryFee, subtotal, total, deliveryOption } = body;
+    const { items, addressData, addressId, deliveryFee, subtotal, total, deliveryOption, prescriptionImage } = body;
 
-    if (!items || items.length === 0) {
-      return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
+    if ((!items || items.length === 0) && !prescriptionImage) {
+      return NextResponse.json({ error: 'Cart is empty and no prescription provided' }, { status: 400 });
     }
 
     let finalAddressId = addressId;
@@ -81,15 +81,18 @@ export async function POST(request: Request) {
         deliveryAddressId: finalAddressId,
         paymentMethod: 'pending',
         paymentStatus: 'pending',
-        items: {
-          create: items.map((item: any) => ({
-            productId: item.product.id,
-            name: item.product.name,
-            price: item.product.price,
-            quantity: item.quantity,
-            image: item.product.image,
-          }))
-        }
+        prescriptionImage: prescriptionImage || null,
+        ...(items && items.length > 0 ? {
+          items: {
+            create: items.map((item: any) => ({
+              productId: item.product.id,
+              name: item.product.name,
+              price: item.product.price,
+              quantity: item.quantity,
+              image: item.product.image,
+            }))
+          }
+        } : {})
       }
     });
 

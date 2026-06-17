@@ -280,6 +280,29 @@ export default function AdminOrdersPage() {
                   </div>
                 </div>
               </div>
+              
+              {viewingOrder.prescriptionImage && (
+                <div>
+                  <h3 className="font-bold text-text-primary mb-3 text-danger flex items-center gap-2">
+                    Prescription Document
+                  </h3>
+                  <div className="border border-border rounded-xl overflow-hidden bg-surface flex justify-center p-2">
+                    <div className="relative w-full max-w-[300px] aspect-[3/4]">
+                      <Image 
+                        src={viewingOrder.prescriptionImage} 
+                        alt="Prescription" 
+                        fill 
+                        className="object-contain" 
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-2 text-right">
+                    <a href={viewingOrder.prescriptionImage} download="prescription.jpg" className="text-xs text-primary-green hover:underline font-medium">
+                      Download Image
+                    </a>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <h3 className="font-bold text-text-primary mb-3">Payment Info</h3>
