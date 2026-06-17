@@ -375,8 +375,16 @@ export default function AdminOrdersPage() {
                 <h3 className="font-bold text-text-primary mb-3">Payment Info</h3>
                 <div className="p-4 border border-border rounded-xl bg-surface text-sm flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-2">
                   <div>
-                    <span className="font-medium uppercase">{viewingOrder.paymentMethod.replace('_', ' ')}</span>
-                    <Badge variant="success" className="ml-2">Paid</Badge>
+                    <span className="font-medium uppercase">
+                      {viewingOrder.paymentMethod === 'pending' || !viewingOrder.paymentMethod 
+                        ? 'Pending' 
+                        : viewingOrder.paymentMethod.replace('_', ' ')}
+                    </span>
+                    {viewingOrder.paymentStatus === 'paid' ? (
+                      <Badge variant="success" className="ml-2">Paid</Badge>
+                    ) : (
+                      <Badge variant="warning" className="ml-2">Pending</Badge>
+                    )}
                   </div>
                   <span className="font-mono text-text-muted text-xs">Ref: {viewingOrder.id.substring(0, 8).toUpperCase()}</span>
                 </div>
