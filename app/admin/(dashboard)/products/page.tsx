@@ -185,23 +185,54 @@ export default function AdminProductsPage() {
     }
 
     setIsUploading(true);
-    const formDataUpload = new FormData();
-    formDataUpload.append('file', file);
 
     try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formDataUpload,
-      });
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
 
-      if (!response.ok) throw new Error('Upload failed');
-      
-      const data = await response.json();
-      setFormData({ ...formData, image: data.url });
-      toast.success('Image uploaded successfully');
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          // Compress to 80% quality JPEG
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          setFormData({ ...formData, image: dataUrl });
+          toast.success('Image uploaded successfully');
+          setIsUploading(false);
+        };
+        img.onerror = () => {
+          toast.error('Failed to process image');
+          setIsUploading(false);
+        };
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = () => {
+        toast.error('Failed to read file');
+        setIsUploading(false);
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
       toast.error('Failed to upload image');
-    } finally {
       setIsUploading(false);
     }
   };
