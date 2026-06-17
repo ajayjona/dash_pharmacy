@@ -15,6 +15,9 @@ export default function AdminOrdersPage() {
   const [viewingOrder, setViewingOrder] = useState<any | null>(null);
   const [newStatus, setNewStatus] = useState<string>('');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
+  const [itemToAdd, setItemToAdd] = useState({ productId: '', quantity: 1 });
+  const [isAddingItem, setIsAddingItem] = useState(false);
 
   const openOrder = (order: any) => {
     setViewingOrder(order);
@@ -43,6 +46,31 @@ export default function AdminOrdersPage() {
       alert("Error updating status");
     } finally {
       setIsUpdatingStatus(false);
+    }
+  };
+
+  const handleAddItem = async () => {
+    if (!itemToAdd.productId || itemToAdd.quantity < 1 || !viewingOrder) return;
+    setIsAddingItem(true);
+    try {
+      const res = await fetch(`/api/orders/${viewingOrder.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'ADD_ITEM', item: itemToAdd })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setViewingOrder(updated);
+        setOrders(orders.map(o => o.id === updated.id ? updated : o));
+        setItemToAdd({ productId: '', quantity: 1 });
+      } else {
+        alert("Failed to add item");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error adding item");
+    } finally {
+      setIsAddingItem(false);
     }
   };
 
@@ -83,6 +111,13 @@ export default function AdminOrdersPage() {
         console.error(err);
         setLoading(false);
       });
+
+    fetch('/api/products')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setProducts(data);
+      })
+      .catch(console.error);
   }, []);
 
   const tabs = ['All', 'Pending', 'Confirmed', 'Packing', 'Dispatched', 'Delivered', 'Cancelled'];
@@ -278,6 +313,38 @@ export default function AdminOrdersPage() {
                       <span className="font-mono font-bold text-lg text-primary-green">{formatPrice(viewingOrder.total)}</span>
                     </div>
                   </div>
+                  
+                  {/* Add Item Form */}
+                  <div className="p-3 bg-background border-t border-border">
+                    <h4 className="text-xs font-bold text-text-primary mb-2">Add Item to Order</h4>
+                    <div className="flex gap-2 items-end">
+                      <div className="flex-1">
+                        <select 
+                          className="w-full px-2 py-1.5 border border-border rounded text-sm bg-surface"
+                          value={itemToAdd.productId}
+                          onChange={(e) => setItemToAdd({...itemToAdd, productId: e.target.value})}
+                        >
+                          <option value="">Select product...</option>
+                          {products.map(p => (
+                            <option key={p.id} value={p.id}>{p.name} - {formatPrice(p.price)}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="w-16">
+                        <input 
+                          type="number" 
+                          min="1" 
+                          className="w-full px-2 py-1.5 border border-border rounded text-sm bg-surface"
+                          value={itemToAdd.quantity}
+                          onChange={(e) => setItemToAdd({...itemToAdd, quantity: parseInt(e.target.value) || 1})}
+                        />
+                      </div>
+                      <Button size="sm" onClick={handleAddItem} disabled={isAddingItem || !itemToAdd.productId}>
+                        {isAddingItem ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
+                      </Button>
+                    </div>
+                  </div>
+
                 </div>
               </div>
               
