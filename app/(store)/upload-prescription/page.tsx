@@ -9,7 +9,7 @@ import { FileText, MapPin, Phone, Loader2, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function UploadPrescriptionPage() {
-  const { isAuthenticated, isLoading } = useAppSelector(state => state.auth);
+  const { user, isAuthenticated, isLoading } = useAppSelector(state => state.auth);
   const router = useRouter();
   
   const [prescriptionImage, setPrescriptionImage] = useState<string>('');
@@ -22,7 +22,10 @@ export default function UploadPrescriptionPage() {
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    if (user?.phone) {
+      setPhone(user.phone);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (isMounted && !isLoading && !isAuthenticated) {

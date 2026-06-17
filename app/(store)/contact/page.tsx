@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAppSelector } from '@/store/hooks';
 import { MapPin, Phone, Mail, Clock, Send, ShieldCheck, HeartPulse, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 export default function ContactPage() {
+  const { user } = useAppSelector(state => state.auth);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -15,6 +17,21 @@ export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      const nameParts = user.name?.split(' ') || [];
+      const fName = nameParts[0] || '';
+      const lName = nameParts.slice(1).join(' ') || '';
+      
+      setFormData(prev => ({
+        ...prev,
+        firstName: prev.firstName || fName,
+        lastName: prev.lastName || lName,
+        email: prev.email || user.email || ''
+      }));
+    }
+  }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));

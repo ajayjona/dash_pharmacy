@@ -11,7 +11,8 @@ import { useRouter } from 'next/navigation';
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -37,7 +38,7 @@ export default function RegisterPage() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, password })
+        body: JSON.stringify({ name: `${firstName} ${lastName}`.trim(), email, phone, password })
       });
 
       if (!res.ok) {
@@ -73,12 +74,15 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <div>
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <User className="h-5 w-5 text-text-muted" />
               </div>
-              <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Full name" required className="block w-full pl-10 pr-3 py-3 border border-border rounded-lg bg-background text-sm focus:outline-none focus:border-primary-green focus:ring-1 focus:ring-primary-green transition-colors" />
+              <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First name" required className="block w-full pl-10 pr-3 py-3 border border-border rounded-lg bg-background text-sm focus:outline-none focus:border-primary-green focus:ring-1 focus:ring-primary-green transition-colors" />
+            </div>
+            <div className="flex-1 relative">
+              <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Surname" required className="block w-full px-3 py-3 border border-border rounded-lg bg-background text-sm focus:outline-none focus:border-primary-green focus:ring-1 focus:ring-primary-green transition-colors" />
             </div>
           </div>
 

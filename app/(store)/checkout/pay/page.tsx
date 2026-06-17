@@ -14,11 +14,18 @@ function PaymentContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   
+  const { user } = useAppSelector(state => state.auth);
   const [activeTab, setActiveTab] = useState<'cod' | 'mtn' | 'airtel' | 'card'>('cod');
   const [phone, setPhone] = useState('');
+  const [cardName, setCardName] = useState('');
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success'>('idle');
   const [countdown, setCountdown] = useState(60);
   const [orderData, setOrderData] = useState<any>(null);
+
+  useEffect(() => {
+    if (user?.phone && !phone) setPhone(user.phone);
+    if (user?.name && !cardName) setCardName(user.name);
+  }, [user]);
 
   useEffect(() => {
     if (orderId) {
@@ -190,7 +197,13 @@ function PaymentContent() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-text-primary mb-1">Cardholder name</label>
-                      <input type="text" placeholder="John Doe" className="w-full px-4 py-3 border border-border rounded-lg focus:ring-1 focus:ring-primary-green" />
+                      <input 
+                        type="text" 
+                        placeholder="John Doe" 
+                        value={cardName}
+                        onChange={(e) => setCardName(e.target.value)}
+                        className="w-full px-4 py-3 border border-border rounded-lg focus:ring-1 focus:ring-primary-green" 
+                      />
                     </div>
                   </div>
                 )}

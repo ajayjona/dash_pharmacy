@@ -15,7 +15,7 @@ type Step = 1 | 2 | 3;
 
 export default function CheckoutPage() {
   const { items, total: subtotal } = useAppSelector(state => state.cart);
-  const { isAuthenticated, isLoading } = useAppSelector(state => state.auth);
+  const { user, isAuthenticated, isLoading } = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>(1);
@@ -49,7 +49,10 @@ export default function CheckoutPage() {
 
   React.useEffect(() => {
     setIsMounted(true);
-  }, []);
+    if (user?.phone && !addressData.phone) {
+      setAddressData(prev => ({ ...prev, phone: user.phone! }));
+    }
+  }, [user]);
 
   React.useEffect(() => {
     if (isMounted && !isLoading) {
