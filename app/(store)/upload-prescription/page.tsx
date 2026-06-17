@@ -68,7 +68,7 @@ export default function UploadPrescriptionPage() {
       }
 
       toast.success('Prescription submitted! Our team will review it and contact you with a quote.');
-      router.push('/orders');
+      router.push('/cart');
     } catch (err) {
       console.error(err);
       toast.error('Error submitting prescription. Please try again later.');
