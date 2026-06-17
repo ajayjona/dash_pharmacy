@@ -248,12 +248,12 @@ export default function AdminOrdersPage() {
 
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
               
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 border border-border rounded-xl bg-background">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 border border-border rounded-xl bg-background overflow-hidden">
                   <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Customer</h3>
-                  <p className="font-medium text-sm">{viewingOrder.customer?.name}</p>
-                  <p className="text-sm text-text-secondary">{viewingOrder.customer?.phone}</p>
-                  <p className="text-sm text-text-secondary">{viewingOrder.customer?.email}</p>
+                  <p className="font-medium text-sm truncate">{viewingOrder.customer?.name}</p>
+                  <p className="text-sm text-text-secondary truncate">{viewingOrder.customer?.phone}</p>
+                  <p className="text-sm text-text-secondary break-all">{viewingOrder.customer?.email}</p>
                 </div>
                 <div className="p-4 border border-border rounded-xl bg-background">
                   <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Status</h3>
