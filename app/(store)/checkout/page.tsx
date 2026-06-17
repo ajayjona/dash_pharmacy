@@ -137,9 +137,23 @@ export default function CheckoutPage() {
   };
 
   const handleNext = async () => {
-    if (currentStep === 1 && requiresPrescription && !prescriptionImage) {
-      toast.error('Please upload your prescription to continue');
-      return;
+    if (currentStep === 1) {
+      if (showNewAddressForm) {
+        if (!addressData.phone || !addressData.street) {
+          toast.error('Please provide a phone number and street address');
+          return;
+        }
+      } else {
+        if (!selectedAddressId) {
+          toast.error('Please select a delivery address or add a new one');
+          return;
+        }
+      }
+
+      if (requiresPrescription && !prescriptionImage) {
+        toast.error('Please upload your prescription to continue');
+        return;
+      }
     }
     
     if (currentStep < 3) setCurrentStep((prev) => (prev + 1) as Step);
