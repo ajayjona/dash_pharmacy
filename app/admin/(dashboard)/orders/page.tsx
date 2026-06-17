@@ -15,10 +15,6 @@ export default function AdminOrdersPage() {
   const [viewingOrder, setViewingOrder] = useState<any | null>(null);
   const [newStatus, setNewStatus] = useState<string>('');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const [products, setProducts] = useState<any[]>([]);
-  const [selectedProductId, setSelectedProductId] = useState<string>('');
-  const [addQuantity, setAddQuantity] = useState<number>(1);
-  const [isAddingItem, setIsAddingItem] = useState(false);
 
   const openOrder = (order: any) => {
     setViewingOrder(order);
@@ -47,38 +43,6 @@ export default function AdminOrdersPage() {
       alert("Error updating status");
     } finally {
       setIsUpdatingStatus(false);
-    }
-  };
-
-  const handleAddItem = async () => {
-    if (!viewingOrder || !selectedProductId || addQuantity < 1) return;
-    
-    setIsAddingItem(true);
-    try {
-      const res = await fetch(`/api/orders/${viewingOrder.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'ADD_ITEM', 
-          productId: selectedProductId, 
-          quantity: addQuantity 
-        })
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        setViewingOrder(updated);
-        setOrders(orders.map(o => o.id === updated.id ? updated : o));
-        setSelectedProductId('');
-        setAddQuantity(1);
-        alert("Item added successfully");
-      } else {
-        alert("Failed to add item");
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Error adding item");
-    } finally {
-      setIsAddingItem(false);
     }
   };
 
@@ -119,13 +83,6 @@ export default function AdminOrdersPage() {
         console.error(err);
         setLoading(false);
       });
-
-    fetch('/api/products?limit=500')
-      .then(res => res.json())
-      .then(data => {
-        if(Array.isArray(data)) setProducts(data);
-      })
-      .catch(console.error);
   }, []);
 
   const tabs = ['All', 'Pending', 'Confirmed', 'Packing', 'Dispatched', 'Delivered', 'Cancelled'];
@@ -321,34 +278,6 @@ export default function AdminOrdersPage() {
                       <span className="font-mono font-bold text-lg text-primary-green">{formatPrice(viewingOrder.total)}</span>
                     </div>
                   </div>
-                  
-                  {viewingOrder.status === 'pending' && (
-                    <div className="p-3 bg-primary-light/20 border-t border-border flex flex-col gap-3">
-                      <h4 className="text-sm font-bold text-text-primary">Add Item</h4>
-                      <div className="flex gap-2">
-                        <select 
-                          className="flex-1 px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:outline-none focus:border-primary-green"
-                          value={selectedProductId}
-                          onChange={(e) => setSelectedProductId(e.target.value)}
-                        >
-                          <option value="">Select product...</option>
-                          {products.map(p => (
-                            <option key={p.id} value={p.id}>{p.name} - {formatPrice(p.price)}</option>
-                          ))}
-                        </select>
-                        <input 
-                          type="number" 
-                          min="1" 
-                          className="w-20 px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:outline-none focus:border-primary-green"
-                          value={addQuantity}
-                          onChange={(e) => setAddQuantity(parseInt(e.target.value) || 1)}
-                        />
-                        <Button size="sm" onClick={handleAddItem} disabled={isAddingItem || !selectedProductId}>
-                          {isAddingItem ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
               

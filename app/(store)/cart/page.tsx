@@ -77,16 +77,9 @@ export default function CartPage() {
                   {order.items?.length || 0} items • {formatPrice(order.total)}
                 </p>
               </div>
-              <div className="flex gap-2">
-                {order.paymentStatus === 'pending' && order.total > 0 && (
-                  <Button variant="primary" size="sm" onClick={() => router.push(`/checkout/pay?orderId=${order.id}`)}>
-                    Complete Payment
-                  </Button>
-                )}
-                <Button variant="outline" size="sm" onClick={() => setViewingOrder(order)}>
-                  View Receipt <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              </div>
+              <Button variant="outline" size="sm" onClick={() => setViewingOrder(order)}>
+                View Receipt <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
             </div>
             
             <div className="relative pt-2">
