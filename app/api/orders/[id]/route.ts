@@ -28,7 +28,43 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
   try {
     const params = await props.params;
     const body = await request.json();
-    const { status, paymentStatus } = body;
+    const { status, paymentStatus, action, productId, quantity } = body;
+
+    if (action === 'ADD_ITEM') {
+      if (!productId || !quantity) return NextResponse.json({ error: 'Missing product details' }, { status: 400 });
+      
+      const product = await prisma.product.findUnique({ where: { id: productId } });
+      if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+
+      const order = await prisma.order.findUnique({ where: { id: params.id }, include: { items: true } });
+      if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+
+      const itemTotal = product.price * quantity;
+      
+      // Update order with new item and totals
+      const updatedOrder = await prisma.order.update({
+        where: { id: params.id },
+        data: {
+          subtotal: order.subtotal + itemTotal,
+          total: order.total + itemTotal,
+          items: {
+            create: {
+              productId: product.id,
+              name: product.name,
+              price: product.price,
+              quantity: quantity,
+              image: product.image
+            }
+          }
+        },
+        include: {
+          customer: true,
+          deliveryAddress: true,
+          items: true,
+        }
+      });
+      return NextResponse.json(updatedOrder);
+    }
 
     const data: any = {};
     if (status) data.status = status;
