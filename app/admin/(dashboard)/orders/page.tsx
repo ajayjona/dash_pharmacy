@@ -248,14 +248,14 @@ export default function AdminOrdersPage() {
 
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 border border-border rounded-xl bg-background overflow-hidden">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 border border-border rounded-xl bg-background flex flex-col justify-center">
                   <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Customer</h3>
-                  <p className="font-medium text-sm truncate">{viewingOrder.customer?.name}</p>
-                  <p className="text-sm text-text-secondary truncate">{viewingOrder.customer?.phone}</p>
-                  <p className="text-sm text-text-secondary break-all">{viewingOrder.customer?.email}</p>
+                  <p className="font-medium text-sm break-words">{viewingOrder.customer?.name}</p>
+                  <p className="text-sm text-text-secondary break-words">{viewingOrder.customer?.phone}</p>
+                  <p className="text-sm text-text-secondary break-all sm:break-words">{viewingOrder.customer?.email}</p>
                 </div>
-                <div className="p-4 border border-border rounded-xl bg-background">
+                <div className="p-4 border border-border rounded-xl bg-background flex flex-col justify-center">
                   <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Status</h3>
                   <div className="mb-2">{getStatusBadge(viewingOrder.status)}</div>
                   <div className="text-xs text-text-muted">
@@ -373,7 +373,7 @@ export default function AdminOrdersPage() {
 
               <div>
                 <h3 className="font-bold text-text-primary mb-3">Payment Info</h3>
-                <div className="p-4 border border-border rounded-xl bg-surface text-sm flex justify-between items-center">
+                <div className="p-4 border border-border rounded-xl bg-surface text-sm flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-2">
                   <div>
                     <span className="font-medium uppercase">{viewingOrder.paymentMethod.replace('_', ' ')}</span>
                     <Badge variant="success" className="ml-2">Paid</Badge>
