@@ -32,7 +32,7 @@ export default function UploadPrescriptionPage() {
   }, [isMounted, isAuthenticated, isLoading, router]);
 
   if (!isMounted || !isAuthenticated) {
-    return null; // Return null while checking auth
+    return null; 
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
